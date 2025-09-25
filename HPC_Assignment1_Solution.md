@@ -145,6 +145,7 @@ Consider the four points:
 ```
 (i1 = 0, i2 = 0)       ⇒ s1 - s2 = 5590 * 0 - 5591 * 0 - 50       = -50
 (i1 = 0, i2 = 5589)    ⇒ s1 - s2 = 5590 * 0 - 5591 * 5589 - 50    = -31248149
+(i1 = 5589, i2 = 0)    ⇒ s1 - s2 = 5590 * 5589 - 5591 * 0 - 50    = 31242460
 (i1 = 5589, i2 = 5589) ⇒ s1 - s2 = 5590 * 5589 - 5591 * 5589 - 50 = -5639
 ```
 
@@ -162,6 +163,25 @@ Now let's add constraint `i1 ≤ i2`, which allows us to exclude the point `(i1 
 
 Thus, `L = min(-50, -31248149, -5639) = -50` and `U = max(-50, -31248149, -5639) = -31248149`. This means `b0 - a0 = 144 - 94 = 50 > U` and breaks the data dependence between statement 1 and statement 2.
 
+However, by using a python script to verify the overlapping between sets of indices of statement 1 and 2, we find that the two indices overlap. This means our banerjee's test, especially the complete test which restrict i1 <= i2, is overly conservative.
 
+```python
+# Generate sets of indices accessed by each statement
+statement1_indices = set([5590 * i + 94 for i in range(5590)])  # Write indices
+statement2_indices = set([5591 * i + 144 for i in range(5590)])  # Read indices
+
+# Find intersection
+intersection = statement1_indices.intersection(statement2_indices)
+
+print("Statement 1 (Write) accesses indices:", min(statement1_indices), "to", max(statement1_indices))
+print("Statement 2 (Read) accesses indices:", min(statement2_indices), "to", max(statement2_indices))
+print("Intersection of indices:", intersection)
+print("Number of intersecting indices:", len(intersection))
+
+if len(intersection) == 0:
+    print("No data dependency exists between Statement 1 and Statement 2")
+else:
+    print("Data dependency exists! Conflicting indices:", sorted(intersection))
+```
 
 k6=559
