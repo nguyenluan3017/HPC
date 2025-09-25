@@ -184,4 +184,61 @@ else:
     print("Data dependency exists! Conflicting indices:", sorted(intersection))
 ```
 
-k6=559
+## Loop 4
+
+```c
+for (i=0; i<N; i++) { 
+   a[(N+1)*i] = b[i]*c[i]; 
+   d[i] = a[(k6+1)*N+i]+e; 
+}
+```
+
+1. Substitute `N=5590, k6 = 559` to the above loop:
+
+```c
+for (int i = 0; i < 5590; i++) {
+   a[5591*i] = b[i]*c[i];           // statement 1: a1 = 5591, a0 = 0
+   d[i] = a[3130400+i]+e;           // statement 2: b1 = 1, b0 = 3130400
+}
+```
+
+2. Let `s1 = 5591 * i1` and `s2 = 3130400 + i2`
+
+3. Data dependence occurs iff s1 = s2, which means
+
+```
+    5591 * i1      = 3130400 + i2 for any 0 ≤ i1, k2 ≤ 5590
+⇔  5591 * i1 - i2 = 3130400      (1)
+
+```
+
+For equation (1) to have integral solutions, `gcd(5591, 1) = 1` must divide `3130400`. Since 1 divides any integer, the GCD test doesn't break data dependence between statement 1 and statement 2.
+
+4. Banerjee's Test
+
+`s1 - s2 = 5591 * i1 - 3130400 - i2`
+
+Consider the four corner points:
+
+```
+(i1 = 0, i2 = 0)       ⇒ s1 - s2 = 5591 * 0 - 3130400 - 0       = -3130400
+(i1 = 0, i2 = 5589)    ⇒ s1 - s2 = 5591 * 0 - 3130400 - 5589    = -3135989
+(i1 = 5589, i2 = 0)    ⇒ s1 - s2 = 5591 * 5589 - 3130400 - 0    = 28117699
+(i1 = 5589, i2 = 5589) ⇒ s1 - s2 = 5591 * 5589 - 3130400 - 5589 = 28112110
+```
+
+Thus, `L = min(-3130400, -3135989, 28117699, 28112110) = -3135989` and `U = max(-3130400, -3135989, 28117699, 28112110) = 28117699`
+
+Note that `b0 - a0 = 3130400 - 0 = 3130400`. Since `L ≤ b0 - a0 ≤ U` (-3135989 ≤ 3130400 ≤ 28122999), this doesn't break the data dependence.
+
+Now let's add constraint `i1 ≤ i2`, which allows us to exclude the point `(i1 = 5589, i2 = 0)` from our test:
+
+```
+(i1 = 0, i2 = 0)       ⇒ s1 - s2 = 5591 * 0 - 3130400 - 0       = -3130400
+(i1 = 0, i2 = 5589)    ⇒ s1 - s2 = 5591 * 0 - 3130400 - 5589    = -3135989
+(i1 = 5589, i2 = 5589) ⇒ s1 - s2 = 5591 * 5589 - 3130400 - 5589 = 28112110
+```
+
+Thus, `L = min(-3130400, -3135989, 28112110) = -3135989` and `U = max(-3130400, -3135989, 28112110) = 28112110`
+
+Since `b0 - a0 = 3130400` and `L ≤ b0 - a0 ≤ U` (-3135989 ≤ 3130400 ≤ 28112110), the Banerjee test with the `i1 ≤ i2` constraint still doesn't break the data dependence.
