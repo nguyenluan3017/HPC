@@ -104,11 +104,64 @@ Consider the four points:
 (i1 = 5589, i2 = 5589) ⇒ s1 - s2 = 5589 - 5589 - 5590 = -5590
 ```
 
-Now `L = min(-5590, -11179, -1, -5590) = -11179`, `U = max(-5590, -11179, -1, -5590) = -1`. And `b0 - a0 = 698750 - 693160 = 5590` which is not in the range (-11179, -1). This break the dependence between statement 1 and statement 2.
+Now `L = min(-5590, -11179, -1, -5590) = -11179`, `U = max(-5590, -11179, -1, -5590) = -1`. And `b0 - a0 = 698750 - 693160 = 5590` which is not in the interval [-11179, -1]. This breaks the dependence between statement 1 and statement 2.
 
 ## Loop 3
 
+```c
+for (i=0; i<N; i++) { 
+   a[N*i+k4] = b[i]*c[i]; 
+   d[i] = a[(N+1)*i+k5]+e; 
+}
+```
+
+
+1. Substitute N=5590, k4=94, k5=144 to the above loop:
+
+```c
+for (int i = 0; i < 5590; i++) {
+   a[5590*i+94] = b[i]*c[i];    // statement 1: a1 = 5590, a0 = 94
+   d[i] = a[5591*i+144]+e;      // statement 2: b1 = 5591, b0 = 144
+}
+```
+
+2. Let `s1 = 5590*i+94` and `s2 = 5591*i+144`
+
+3. Data dependence occurs iff s1 = s2, which means
+
+```
+    5590 * i1 + 94        = 5591 * i2 + 144 for any 0 ≤ i1, k2 ≤ 5590
+⇔  5590 * i1 - 5591 * i2 = 50              (1)
+```
+
+4. GCD Test, to check if equation (1) has integral solution, we verify if `gcd(5590, 5591)` divides `50`. Since `gcd(5590, 5591) = 1` and 1 divides 50, the GCD test doesn't break data dependence between statement 1 and statement 2.
+
+4. Banerjee's test
+
+`s1 - s2 = 5590 * i1 + 94 - 5591 * i2 - 144 = 5590 * i1 - 5591 * i2 - 50`
+
+Consider the four points:
+
+```
+(i1 = 0, i2 = 0)       ⇒ s1 - s2 = 5590 * 0 - 5591 * 0 - 50       = -50
+(i1 = 0, i2 = 5589)    ⇒ s1 - s2 = 5590 * 0 - 5591 * 5589 - 50    = -31248149
+(i1 = 5589, i2 = 5589) ⇒ s1 - s2 = 5590 * 5589 - 5591 * 5589 - 50 = -5639
+```
+
+Thus, `L = min(-50, -31248149, 31242460, -5639) = -31248149` and `U = max(-50, -31248149, 31242460, -5639) = 31242460`.
+
+Note that `b0 - a0 = 144 - 94 = 50`. So `L ≤ b0 - a0 ≤ U` which doesn't break the data dependence.
+
+Now let's add constraint `i1 ≤ i2`, which allows us to exclude the point `(i1 = 5589, i2 = 0)` from our test. Hence, we have
+
+```
+(i1 = 0, i2 = 0)       ⇒ s1 - s2 = 5590 * 0 - 5591 * 0 - 50       = -50
+(i1 = 0, i2 = 5589)    ⇒ s1 - s2 = 5590 * 0 - 5591 * 5589 - 50    = -31248149
+(i1 = 5589, i2 = 5589) ⇒ s1 - s2 = 5590 * 5589 - 5591 * 5589 - 50 = -5639
+```
+
+Thus, `L = min(-50, -31248149, -5639) = -50` and `U = max(-50, -31248149, -5639) = -31248149`. This means `b0 - a0 = 144 - 94 = 50 > U` and breaks the data dependence between statement 1 and statement 2.
 
 
 
-k3=124, k4=94, k5=144, k6=559
+k6=559
