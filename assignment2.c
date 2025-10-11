@@ -1,31 +1,31 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <time.h>
 #include <assert.h>
 #include <cblas.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #define min(a, b) ((a)>(b)?(b):(a))
 
+const char *const ARG_BLOCK = "--block";
 const char *const ARG_HELP = "--help";
-const char *const ARG_VARIANT = "--variant";
 const char *const ARG_SIZE = "--size";
+const char *const ARG_VARIANT = "--variant";
 const char *const ARG_VERBOSE = "--verbose";
-const char *const ARG_BLOCK = "--block";  // Add this line
 
-const char *const VARIANT_NAIVE = "naive";
-const char *const VARIANT_BLOCK = "block";
 const char *const VARIANT_BLAS = "blas";
+const char *const VARIANT_BLOCK = "block";
+const char *const VARIANT_NAIVE = "naive";
 
 const int MAX_SIZE = 4096;
 
 typedef struct {
     bool flag_help;
-    char flag_variant[64];
-    int flag_size;
     bool flag_verbose;
+    char flag_variant[64];
     int flag_block;
+    int flag_size;
 } args_t;
 
 typedef struct {
@@ -55,14 +55,8 @@ void show_help(const char *prog_nam) {
     printf("  %s --help\n", prog_nam);
 }
 
-args_t parse_arg(int argc, char *argv[]) {
-    args_t ans = {
-        false,
-        {0},
-        0,
-        false,
-        0,
-    };
+args_t args_parse(int argc, char *argv[]) {
+    args_t ans = {0};
 
     if (argc == 1) {
         ans.flag_help = true;
@@ -180,60 +174,91 @@ matrix_t *matrix_mult_block(matrix_t *A, matrix_t *B, int block_size) {
 }
 
 matrix_t *matrix_mult_cblas(matrix_t *A, matrix_t *B) {
+    const int N = A->size;
+
+    double *A_d = (double *)calloc(N * N, sizeof(double));
+    double *B_d = (double *)calloc(N * N, sizeof(double));
+    double *C_d = (double *)calloc(N * N, sizeof(double));
     
+    matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
+    C->size = N;
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            A_d[i * N + j] = A->mem[i][j];
+            B_d[i * N + j] = B->mem[i][j];
+        }
+    }
+
+    cblas_dgemm(
+        CblasRowMajor,
+        CblasNoTrans,
+        CblasNoTrans,
+        N,
+        N,
+        N,
+        1.0,
+        A_d,
+        N,
+        B_d,
+        N,
+        0.0,    
+        C_d,
+        N    
+    );
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            C->mem[i][j] = C_d[i * N + j];
+        }
+    }
+
+    free(A_d);
+    free(B_d);
+    free(C_d);
+
+    return C;
 }
 
 void generate_matrices(bool verbose, int size, matrix_t **A, matrix_t **B) {
-    printf("Two matrices of size %dx%d\n", size, size);
+    if (verbose) {
+        printf("Two matrices of size %dx%d\n", size, size);
+    }
+    
     *A = matrix_new(size);
     if (verbose) {
         matrix_print(*A);
     }
+
     *B = matrix_new(size);
     if (verbose) {
         matrix_print(*B);
     }
 }
 
-int main(int argc, char *argv[]) {
+void benchmark(args_t args) {
     matrix_t *A = NULL;
     matrix_t *B = NULL;
     matrix_t *C = NULL;
-    args_t args = parse_arg(argc, argv);
 
-    srand(time(0));
+    generate_matrices(args.flag_verbose, args.flag_size, &A, &B);
 
-    if (args.flag_help) {
-        show_help(argv[0]);
+    if (strcmp(args.flag_variant, VARIANT_NAIVE) == 0) {
+        C = matrix_mult_naive(A, B);
+    } else if (strcmp(args.flag_variant, VARIANT_BLOCK) == 0) {
+        C = matrix_mult_block(A, B, args.flag_block);
+    } else if (strcmp(args.flag_variant, VARIANT_BLAS) == 0) {
+        C = matrix_mult_cblas(A, B);
     } else {
-        if (args.flag_size <= 0) {
-            fprintf(stderr, "Size of matrix should not be positive (but receiving %d)\n", args.flag_size);
-            return -1;
-        }
+        fprintf(stderr, "Unsupported variant: %s\n", args.flag_variant);
+        exit(-1);
+    }
 
-        generate_matrices(args.flag_verbose, args.flag_size, &A, &B);
-
-        if (strcmp(args.flag_variant, VARIANT_NAIVE) == 0) {
-            C = matrix_mult_naive(A, B);
-        } else if (strcmp(args.flag_variant, VARIANT_BLOCK) == 0) {
-            C = matrix_mult_block(A, B, args.flag_block);
-        } else if (strcmp(args.flag_variant, VARIANT_BLAS) == 0) {
-            C = matrix_mult_cblas(A, B);
-        } else {
-            printf("Unsupported variant: %s\n", args.flag_variant);
-            return -1;
-        }
-
-        if (C == NULL) {
-            return -1;
-        }
-
-        if (C == NULL) {
-            fprintf(stderr, "Can't calculate A * B");
-        } else if (args.flag_verbose) {
-            printf("The result matrix is:\n");
-            matrix_print(C);
-        }
+    if (C == NULL) {
+        fprintf(stderr, "Can't perform matrix multiplication for variant '%s'\n", args.flag_variant);
+    } else if (args.flag_verbose) {
+        printf("The result matrix is:\n");
+        matrix_print(C);
     }
 
     if (A != NULL) {
@@ -246,6 +271,21 @@ int main(int argc, char *argv[]) {
 
     if (C != NULL) {
         free(C);
+    }
+}
+
+int main(int argc, char *argv[]) {
+    args_t args = args_parse(argc, argv);
+
+    if (args.flag_help) {
+        show_help(argv[0]);
+    } else {
+        if (args.flag_size <= 0) {
+            fprintf(stderr, "Size of matrix should not be positive (but receiving %d)\n", args.flag_size);
+            return -1;
+        }
+        srand(time(0));
+        benchmark(args);
     }
 
     return 0;
