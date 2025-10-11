@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import os
 import subprocess
@@ -223,7 +224,7 @@ def main():
     
     # Get and print system information
     sys_info = print_system_info()
-    exec_name = f"./bin/mmult.{sys_info["os_name"]}"
+    exec_name = "./bin/mmult." + sys_info["os_name"]
 
     # Suggest optimal block sizes
     print(f"\n=== Optimization Suggestions ===")
