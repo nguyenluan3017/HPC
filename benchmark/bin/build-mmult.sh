@@ -13,7 +13,7 @@ case "$(uname)" in
     Linux*)
         gcc -I/usr/local/include \
             -L/usr/local/lib \
-            -o mmult.linux
+            -o mmult.linux \
             mmult.c \
             -lcblas
         ;;
