@@ -1,0 +1,171 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+
+const char *const ARG_HELP = "--help";
+const char *const ARG_VARIANT = "--variant";
+const char *const ARG_SIZE = "--size";
+
+const char *const VARIANT_NONBLOCK = "non-block";
+const char *const VARIANT_BLOCK = "block";
+const char *const VARIANT_BLAS = "blas";
+
+const int MAX_SIZE = 4096;
+
+typedef struct {
+    bool flag_help;
+    char flag_variant[64];
+    int flag_size;
+} args_t;
+
+typedef struct {
+    int size;
+    int mem[MAX_SIZE][MAX_SIZE];
+} matrix_t;
+
+void show_help(const char *prog_nam) {
+    printf("Usage: %s [OPTIONS]\n\n", prog_nam);
+    printf("Options:\n");
+    printf("  --help             Show this help message and exit\n");
+    printf("  --variant VARIANT  Specify the variant to use\n");
+    printf("  --size    SIZE     An positive integer represents the size of matrix\n");
+    printf("\n");
+    printf("Examples:\n");
+    printf("  %s --variant non-block --size 10\n", prog_nam);
+    printf("  %s --help\n", prog_nam);
+}
+
+args_t parse_arg(int argc, char *argv[]) {
+    args_t ans = {
+        false,
+        {0},
+        0
+    };
+
+    if (argc == 1) {
+        ans.flag_help = true;
+    } else {
+        for (int i = 1; i < argc; i++) {
+            if (strcmp(argv[i], ARG_HELP) == 0) {
+                ans.flag_help = true;   
+            } else if (strcmp(argv[i], ARG_VARIANT) == 0) {
+                strncpy(ans.flag_variant, argv[i + 1], sizeof ans.flag_variant);
+                i++;
+            } else if (strcmp(argv[i], ARG_SIZE) == 0) {
+                char ssize[64];
+                strncpy(ssize, argv[i + 1], sizeof ssize);
+                ans.flag_size = atoi(ssize);
+                i++;
+            }
+        }
+    }
+
+    return ans;
+}
+
+matrix_t *matrix_new(int N) {
+    matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
+
+    srand(time(0));
+    C->size = N;
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            C->mem[i][j] = rand() % 1000;
+        }
+    }
+
+    return C;
+}
+
+void matrix_print(matrix_t *m) {
+    const int N = m->size;
+    for (int i = 0; i < N; i++) {
+        printf("[");
+        for (int j = 0; j < N; j++) {
+            printf("%7d", m->mem[i][j]);
+        }
+        printf("]\n");
+    }
+}
+
+matrix_t *gemm_non_block(matrix_t *A, matrix_t *B) {
+    if (A->size != B->size) {
+        return NULL;
+    }
+
+    const int N = A->size;
+    matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                C->mem[i][j] += A->mem[i][k] * B->mem[k][j];
+            }
+        }
+    }
+
+    return C;
+}
+
+void generate_matrices(int size, matrix_t **A, matrix_t **B) {
+    printf("Generating matrices of size %dx%d\n", size, size);
+    printf("Generating matrix A...");
+    *A = matrix_new(size);
+    printf("\r******** Matrix A ********\n");
+    matrix_print(*A);
+
+    printf("Generating matrix B...");
+    *B = matrix_new(size);
+    printf("\rMatrix B:           ");    
+    printf("\r******** Matrix B ********\n");
+    matrix_print(*B);
+}
+
+int main(int argc, char *argv[]) {
+    args_t args = parse_arg(argc, argv);
+    matrix_t *A = NULL;
+    matrix_t *B = NULL;
+    matrix_t *C = NULL;
+
+    if (args.flag_help) {
+        show_help(argv[0]);
+    } else {
+        if (args.flag_size <= 0) {
+            fprintf(stderr, "Size of matrix should not be positive (but receiving %d)\n", args.flag_size);
+            return -1;
+        }
+
+        generate_matrices(args.flag_size, &A, &B);
+
+        if (strcmp(args.flag_variant, VARIANT_NONBLOCK) == 0) {
+            printf("Multiplying A * B...");
+            C = gemm_non_block(A, B);
+
+            if (C != NULL) {
+                
+            }
+        } else if (strcmp(args.flag_variant, VARIANT_BLOCK) == 0) {
+
+        } else if (strcmp(args.flag_variant, VARIANT_BLAS) == 0) {
+
+        } else {
+            printf("Unsupported variant: %s\n", args.flag_variant);
+        }
+    }
+
+    if (A != NULL) {
+        free(A);
+    }
+    
+    if (B != NULL) {
+        free(B);
+    }
+
+    if (C != NULL) {
+        free(C);
+    }
+
+    return 0;
+}
