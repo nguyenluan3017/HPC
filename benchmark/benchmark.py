@@ -224,7 +224,7 @@ def get_optimal_block_sizes(cache_info):
         for lv, sz_text in cache_info.items():
             if sz_text:
                 # Parse cache size (handle KB, MB)
-                size_match = re.search(r'(\d+)\s*(KB|MB)', sz_text.upper())
+                size_match = re.search(r'(\d+)\s*(KB|MB|K)', sz_text.upper())
                 size = 0
                 if size_match:
                     size_val = int(size_match.group(1))
@@ -278,7 +278,7 @@ def main():
     print(f"\n=== Example Benchmark Commands ===")
     for lv, sizes in block_sizes.items():
         for blk_size in sizes:
-            print(f"{exec_name} --variant block --size 1024 --block {blk_size} --repeat 1000")
+            print(f"{exec_name} --variant block --size 1024 --block {blk_size} --repeat 100")
     
     return 0
 
