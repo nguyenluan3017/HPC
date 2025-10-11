@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 
+#define MAX_SIZE 4096
 #define min(a, b) ((a)>(b)?(b):(a))
 
 const char *const ARG_BLOCK = "--block";
@@ -18,8 +19,6 @@ const char *const ARG_VALUE_RANGE = "--value-range";
 const char *const VARIANT_BLAS = "blas";
 const char *const VARIANT_BLOCK = "block";
 const char *const VARIANT_NAIVE = "naive";
-
-const int MAX_SIZE = 4096;
 
 typedef struct {
     bool flag_help;
@@ -112,6 +111,12 @@ args_t args_parse(int argc, char *argv[]) {
     return ans;
 }
 
+double get_time() {
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts.tv_sec + ts.tv_nsec * 1e-9;
+}
+
 matrix_t *matrix_new(int N, int min_val, int max_val) {
     matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
 
@@ -119,7 +124,7 @@ matrix_t *matrix_new(int N, int min_val, int max_val) {
     int range = max_val - min_val + 1;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
-            C->mem[i][j] = (rand() % range) + min_val;  // Generate in specified range
+            C->mem[i][j] = (rand() % range) + min_val;
         }
     }
 
@@ -145,7 +150,7 @@ void matrix_print(matrix_t *m) {
     printf("])\n");
 }
 
-matrix_t *matrix_mult_naive(matrix_t *A, matrix_t *B) {
+matrix_t *matrix_mult_naive(matrix_t *A, matrix_t *B, double *runtime = NULL) {
     if (A->size != B->size) {
         return NULL;
     }
@@ -154,6 +159,9 @@ matrix_t *matrix_mult_naive(matrix_t *A, matrix_t *B) {
     matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
     C->size = N;
 
+    if (runtime != NULL) {
+	*runtime = get_time();
+    }
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
@@ -161,11 +169,14 @@ matrix_t *matrix_mult_naive(matrix_t *A, matrix_t *B) {
             }
         }
     }
+    if (runtime != NULL) {
+	    *runtime = get_time() - *runtime;
+    }
 
     return C;
 }
 
-matrix_t *matrix_mult_block(matrix_t *A, matrix_t *B, int block_size) {
+matrix_t *matrix_mult_block(matrix_t *A, matrix_t *B, int block_size, double *runtime = NULL) {
     if (A->size != B->size) {
         return NULL;
     }
@@ -176,10 +187,20 @@ matrix_t *matrix_mult_block(matrix_t *A, matrix_t *B, int block_size) {
     }
 
     const int N = A->size;
-    matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
-    C->size = N;
+    matrix_t *C;
     const int BLOCK_COUNT = N / block_size;
 
+    C = (matrix_t *)calloc(1, sizeof(matrix_t));
+    C->size = N;
+
+    if (N % block_size != 0) {
+	    fprintf(stderr, "Block size must divide matrix size.");
+	    exit(-1);
+    }
+
+    if (runtime != NULL) {
+	    *runtime = get_time();
+    } 
     for (int bi = 0; bi < N; bi += block_size) {
         for (int bj = 0; bj < N; bj += block_size) {
             for (int i = bi; i < min(bi + block_size, N); i++) {
@@ -193,11 +214,14 @@ matrix_t *matrix_mult_block(matrix_t *A, matrix_t *B, int block_size) {
             }
         }
     }
+    if (runtime != NULL) {
+	    *runtime = get_time() - *runtime;
+    }
 
     return C;
 }
 
-matrix_t *matrix_mult_cblas(matrix_t *A, matrix_t *B) {
+matrix_t *matrix_mult_cblas(matrix_t *A, matrix_t *B, double *runtime = NULL) {
     const int N = A->size;
 
     double *A_d = (double *)calloc(N * N, sizeof(double));
@@ -214,6 +238,9 @@ matrix_t *matrix_mult_cblas(matrix_t *A, matrix_t *B) {
         }
     }
 
+    if (runtime == NULL) {
+	    *runtime = get_time();
+    }
     cblas_dgemm(
         CblasRowMajor,
         CblasNoTrans,
@@ -230,6 +257,9 @@ matrix_t *matrix_mult_cblas(matrix_t *A, matrix_t *B) {
         C_d,
         N    
     );
+    if (runtime == NULL) {
+	    *runtime = get_time() - *runtime;
+    }
 
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
