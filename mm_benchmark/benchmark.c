@@ -13,6 +13,7 @@ const char *const ARG_HELP = "--help";
 const char *const ARG_SIZE = "--size";
 const char *const ARG_VARIANT = "--variant";
 const char *const ARG_VERBOSE = "--verbose";
+const char *const ARG_VALUE_RANGE = "--value-range";
 
 const char *const VARIANT_BLAS = "blas";
 const char *const VARIANT_BLOCK = "block";
@@ -26,6 +27,8 @@ typedef struct {
     char flag_variant[64];
     int flag_block;
     int flag_size;
+    int value_min;
+    int value_max;
 } args_t;
 
 typedef struct {
@@ -37,26 +40,36 @@ void show_help(const char *prog_nam) {
     printf("Usage: %s [OPTIONS]\n\n", prog_nam);
     printf("Matrix multiplication program with different implementation variants.\n\n");
     printf("Options:\n");
-    printf("  --help             Show this help message and exit\n");
-    printf("  --variant VARIANT  Specify the multiplication variant to use\n");
-    printf("                     Available variants: naive, block, blas\n");
-    printf("  --size    SIZE     Size of the square matrices (positive integer, max %d)\n", MAX_SIZE);
-    printf("  --verbose          Enable verbose output\n");
-    printf("  --block   BLOCK    Block size for block variant (positive integer)\n");
+    printf("  --help                 Show this help message and exit\n");
+    printf("  --variant VARIANT      Specify the multiplication variant to use\n");
+    printf("                         Available variants: naive, block, blas\n");
+    printf("  --size SIZE            Size of the square matrices (positive integer, max %d)\n", MAX_SIZE);
+    printf("  --verbose              Enable verbose output\n");
+    printf("  --block BLOCK          Block size for block variant (positive integer)\n");
+    printf("  --value-range MIN MAX  Specify the range of matrix values (default: 0 99)\n");
     printf("\n");
     printf("Variants:\n");
-    printf("  naive              Standard triple-loop matrix multiplication\n");
-    printf("  block              Block-based matrix multiplication (cache-friendly)\n");
-    printf("  blas               BLAS library implementation\n");
+    printf("  naive                  Standard triple-loop matrix multiplication\n");
+    printf("  block                  Block-based matrix multiplication (cache-friendly)\n");
+    printf("  blas                   BLAS library implementation\n");
     printf("\n");
     printf("Examples:\n");
     printf("  %s --variant naive --size 100\n", prog_nam);
     printf("  %s --variant block --size 512 --block 64\n", prog_nam);
+    printf("  %s --variant blas --size 512 --value-range 1 10\n", prog_nam);
     printf("  %s --help\n", prog_nam);
 }
 
 args_t args_parse(int argc, char *argv[]) {
-    args_t ans = {0};
+    args_t ans = {
+        .flag_help = false,
+        .flag_verbose = false,
+        .flag_variant = {0},
+        .flag_block = 0,
+        .flag_size = 0,
+        .value_min = 0,
+        .value_max = 99,
+    };
 
     if (argc == 1) {
         ans.flag_help = true;
@@ -82,6 +95,16 @@ args_t args_parse(int argc, char *argv[]) {
                 strncpy(bsize, argv[i + 1], sizeof bsize);
                 ans.flag_block = atoi(bsize);
                 i++;
+            } else if (strcmp(argv[i], ARG_VALUE_RANGE) == 0) {
+                assert(i + 2 < argc);
+                ans.value_min = atoi(argv[i + 1]);
+                ans.value_max = atoi(argv[i + 2]);
+                if (ans.value_min >= ans.value_max) {
+                    fprintf(stderr, "Invalid range: MIN (%d) must be less than MAX (%d)\n", 
+                           ans.value_min, ans.value_max);
+                    exit(-1);
+                }
+                i += 2;
             }
         }
     }
@@ -89,13 +112,14 @@ args_t args_parse(int argc, char *argv[]) {
     return ans;
 }
 
-matrix_t *matrix_new(int N) {
+matrix_t *matrix_new(int N, int min_val, int max_val) {
     matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
 
     C->size = N;
+    int range = max_val - min_val + 1;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
-            C->mem[i][j] = rand() % 100;
+            C->mem[i][j] = (rand() % range) + min_val;  // Generate in specified range
         }
     }
 
@@ -220,17 +244,17 @@ matrix_t *matrix_mult_cblas(matrix_t *A, matrix_t *B) {
     return C;
 }
 
-void generate_matrices(bool verbose, int size, matrix_t **A, matrix_t **B) {
+void generate_matrices(bool verbose, int size, int min_val, int max_val, matrix_t **A, matrix_t **B) {
     if (verbose) {
-        printf("Two matrices of size %dx%d\n", size, size);
+        printf("Two matrices of size %dx%d with values in range [%d, %d]\n", size, size, min_val, max_val);
     }
     
-    *A = matrix_new(size);
+    *A = matrix_new(size, min_val, max_val);
     if (verbose) {
         matrix_print(*A);
     }
 
-    *B = matrix_new(size);
+    *B = matrix_new(size, min_val, max_val);
     if (verbose) {
         matrix_print(*B);
     }
@@ -241,7 +265,14 @@ void benchmark(args_t args) {
     matrix_t *B = NULL;
     matrix_t *C = NULL;
 
-    generate_matrices(args.flag_verbose, args.flag_size, &A, &B);
+    generate_matrices(
+        args.flag_verbose, 
+        args.flag_size, 
+        args.value_min, 
+        args.value_max, 
+        &A, 
+        &B
+    );
 
     if (strcmp(args.flag_variant, VARIANT_NAIVE) == 0) {
         C = matrix_mult_naive(A, B);
