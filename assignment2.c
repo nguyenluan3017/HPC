@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
+#include <cblas.h>
 
 #define min(a, b) ((a)>(b)?(b):(a))
 
@@ -24,12 +25,12 @@ typedef struct {
     char flag_variant[64];
     int flag_size;
     bool flag_verbose;
-    int flag_block;  // Add this line for block size
+    int flag_block;
 } args_t;
 
 typedef struct {
     int size;
-    int mem[MAX_SIZE][MAX_SIZE];
+    double mem[MAX_SIZE][MAX_SIZE];
 } matrix_t;
 
 void show_help(const char *prog_nam) {
@@ -41,7 +42,7 @@ void show_help(const char *prog_nam) {
     printf("                     Available variants: naive, block, blas\n");
     printf("  --size    SIZE     Size of the square matrices (positive integer, max %d)\n", MAX_SIZE);
     printf("  --verbose          Enable verbose output\n");
-    printf("  --block   BLOCK    Block size for block variant (positive integer)\n");  // Add this line
+    printf("  --block   BLOCK    Block size for block variant (positive integer)\n");
     printf("\n");
     printf("Variants:\n");
     printf("  naive              Standard triple-loop matrix multiplication\n");
@@ -113,7 +114,7 @@ void matrix_print(matrix_t *m) {
     for (int i = 0; i < N; i++) {
         printf("[");
         for (int j = 0; j < N; j++) {
-            printf("%d", m->mem[i][j]);
+            printf("%lf", m->mem[i][j]);
             if (j < N - 1) {
                 printf(", ");
             }
@@ -126,7 +127,7 @@ void matrix_print(matrix_t *m) {
     printf("])\n");
 }
 
-matrix_t *gemm_naive(matrix_t *A, matrix_t *B) {
+matrix_t *matrix_mult_naive(matrix_t *A, matrix_t *B) {
     if (A->size != B->size) {
         return NULL;
     }
@@ -146,13 +147,13 @@ matrix_t *gemm_naive(matrix_t *A, matrix_t *B) {
     return C;
 }
 
-matrix_t *gemm_block(matrix_t *A, matrix_t *B, int block_size) {
+matrix_t *matrix_mult_block(matrix_t *A, matrix_t *B, int block_size) {
     if (A->size != B->size) {
         return NULL;
     }
 
     if (block_size <= 0) {
-        fprintf(stderr, "block size must be positive (receiving %d)\n", block_size);
+        fprintf(stderr, "Block size must be positive (receiving %d)\n", block_size);
         exit(-1);
     }
 
@@ -165,7 +166,7 @@ matrix_t *gemm_block(matrix_t *A, matrix_t *B, int block_size) {
         for (int bj = 0; bj < N; bj += block_size) {
             for (int i = bi; i < min(bi + block_size, N); i++) {
                 for (int j = bj; j < min(bj + block_size, N); j++) {
-                    int sum = 0;
+                    double sum = 0;
                     for (int k = 0; k < N; k++) {
                         sum += A->mem[i][k] * B->mem[k][j];
                     }
@@ -176,6 +177,10 @@ matrix_t *gemm_block(matrix_t *A, matrix_t *B, int block_size) {
     }
 
     return C;
+}
+
+matrix_t *matrix_mult_cblas(matrix_t *A, matrix_t *B) {
+    
 }
 
 void generate_matrices(bool verbose, int size, matrix_t **A, matrix_t **B) {
@@ -209,10 +214,11 @@ int main(int argc, char *argv[]) {
         generate_matrices(args.flag_verbose, args.flag_size, &A, &B);
 
         if (strcmp(args.flag_variant, VARIANT_NAIVE) == 0) {
-            C = gemm_naive(A, B);
+            C = matrix_mult_naive(A, B);
         } else if (strcmp(args.flag_variant, VARIANT_BLOCK) == 0) {
-            C = gemm_block(A, B, args.flag_block);
+            C = matrix_mult_block(A, B, args.flag_block);
         } else if (strcmp(args.flag_variant, VARIANT_BLAS) == 0) {
+            C = matrix_mult_cblas(A, B);
         } else {
             printf("Unsupported variant: %s\n", args.flag_variant);
             return -1;
