@@ -7,7 +7,7 @@
 #include <time.h>
 
 #define MAX_SIZE 4096
-#define min(a, b) ((a)>(b)?(b):(a))
+#define min(a, b) ((a) > (b) ? (b) : (a))
 
 const char *const ARG_BLOCK = "--block";
 const char *const ARG_HELP = "--help";
@@ -15,14 +15,17 @@ const char *const ARG_SIZE = "--size";
 const char *const ARG_VARIANT = "--variant";
 const char *const ARG_VERBOSE = "--verbose";
 const char *const ARG_VALUE_RANGE = "--value-range";
+const char *const ARG_REPEAT = "--repeat"; 
 
 const char *const VARIANT_BLAS = "blas";
 const char *const VARIANT_BLOCK = "block";
 const char *const VARIANT_NAIVE = "naive";
 
-typedef struct {
+typedef struct
+{
     bool flag_help;
     bool flag_verbose;
+    int flag_repeat; 
     char flag_variant[64];
     int flag_block;
     int flag_size;
@@ -30,12 +33,14 @@ typedef struct {
     int value_max;
 } args_t;
 
-typedef struct {
+typedef struct
+{
     int size;
     double mem[MAX_SIZE][MAX_SIZE];
 } matrix_t;
 
-void show_help(const char *prog_nam) {
+void show_help(const char *prog_nam)
+{
     printf("Usage: %s [OPTIONS]\n\n", prog_nam);
     printf("Matrix multiplication program with different implementation variants.\n\n");
     printf("Options:\n");
@@ -46,6 +51,7 @@ void show_help(const char *prog_nam) {
     printf("  --verbose              Enable verbose output\n");
     printf("  --block BLOCK          Block size for block variant (positive integer)\n");
     printf("  --value-range MIN MAX  Specify the range of matrix values (default: 0 99)\n");
+    printf("  --repeat REPEAT        Number of times to run the multiplication (default: 1)\n");  
     printf("\n");
     printf("Variants:\n");
     printf("  naive                  Standard triple-loop matrix multiplication\n");
@@ -56,10 +62,12 @@ void show_help(const char *prog_nam) {
     printf("  %s --variant naive --size 100\n", prog_nam);
     printf("  %s --variant block --size 512 --block 64\n", prog_nam);
     printf("  %s --variant blas --size 512 --value-range 1 10\n", prog_nam);
+    printf("  %s --variant naive --size 256 --repeat 10\n", prog_nam);  
     printf("  %s --help\n", prog_nam);
 }
 
-args_t args_parse(int argc, char *argv[]) {
+args_t args_parse(int argc, char *argv[])
+{
     args_t ans = {
         .flag_help = false,
         .flag_verbose = false,
@@ -68,42 +76,77 @@ args_t args_parse(int argc, char *argv[]) {
         .flag_size = 0,
         .value_min = 0,
         .value_max = 99,
+        .flag_repeat = 1,  
     };
 
-    if (argc == 1) {
+    if (argc == 1)
+    {
         ans.flag_help = true;
-    } else {
-        for (int i = 1; i < argc; i++) {
-            if (strcmp(argv[i], ARG_HELP) == 0) {
-                ans.flag_help = true;   
-            } else if (strcmp(argv[i], ARG_VARIANT) == 0) {
+    }
+    else
+    {
+        for (int i = 1; i < argc; i++)
+        {
+            if (strcmp(argv[i], ARG_HELP) == 0)
+            {
+                ans.flag_help = true;
+            }
+            else if (strcmp(argv[i], ARG_VARIANT) == 0)
+            {
                 assert(i + 1 < argc);
                 strncpy(ans.flag_variant, argv[i + 1], sizeof ans.flag_variant);
                 i++;
-            } else if (strcmp(argv[i], ARG_SIZE) == 0) {
+            }
+            else if (strcmp(argv[i], ARG_SIZE) == 0)
+            {
                 char ssize[64] = {0};
                 assert(i + 1 < argc);
                 strncpy(ssize, argv[i + 1], sizeof ssize);
                 ans.flag_size = atoi(ssize);
                 i++;
-            } else if (strcmp(argv[i], ARG_VERBOSE) == 0) {
+            }
+            else if (strcmp(argv[i], ARG_VERBOSE) == 0)
+            {
                 ans.flag_verbose = true;
-            } else if (strcmp(argv[i], ARG_BLOCK) == 0) {
+            }
+            else if (strcmp(argv[i], ARG_BLOCK) == 0)
+            {
                 char bsize[64] = {0};
                 assert(i + 1 < argc);
                 strncpy(bsize, argv[i + 1], sizeof bsize);
                 ans.flag_block = atoi(bsize);
                 i++;
-            } else if (strcmp(argv[i], ARG_VALUE_RANGE) == 0) {
+            }
+            else if (strcmp(argv[i], ARG_VALUE_RANGE) == 0)
+            {
                 assert(i + 2 < argc);
                 ans.value_min = atoi(argv[i + 1]);
                 ans.value_max = atoi(argv[i + 2]);
-                if (ans.value_min >= ans.value_max) {
-                    fprintf(stderr, "Invalid range: MIN (%d) must be less than MAX (%d)\n", 
-                           ans.value_min, ans.value_max);
+                if (ans.value_min >= ans.value_max)
+                {
+                    fprintf(stderr, "Invalid range: MIN (%d) must be less than MAX (%d)\n",
+                            ans.value_min, ans.value_max);
                     exit(-1);
                 }
                 i += 2;
+            }
+            else if (strcmp(argv[i], ARG_REPEAT) == 0)
+            {
+                char repeat_str[64] = {0};
+                assert(i + 1 < argc);
+                strncpy(repeat_str, argv[i + 1], sizeof repeat_str);
+                ans.flag_repeat = atoi(repeat_str);
+                if (ans.flag_repeat <= 0)
+                {
+                    fprintf(stderr, "Repeat count must be positive (but receiving %d)\n", ans.flag_repeat);
+                    exit(-1);
+                }
+                i++;
+            }
+            else
+            {
+                fprintf(stderr, "I can't recognize flag: '%s'\n", argv[i]);
+                exit(-1);
             }
         }
     }
@@ -111,19 +154,23 @@ args_t args_parse(int argc, char *argv[]) {
     return ans;
 }
 
-double get_time() {
-	struct timespec ts;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	return ts.tv_sec + ts.tv_nsec * 1e-9;
+double get_time()
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec + ts.tv_nsec * 1e-9;
 }
 
-matrix_t *matrix_new(int N, int min_val, int max_val) {
+matrix_t *matrix_new(int N, int min_val, int max_val)
+{
     matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
 
     C->size = N;
     int range = max_val - min_val + 1;
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
             C->mem[i][j] = (rand() % range) + min_val;
         }
     }
@@ -131,115 +178,131 @@ matrix_t *matrix_new(int N, int min_val, int max_val) {
     return C;
 }
 
-void matrix_print(matrix_t *m) {
+void matrix_print(matrix_t *m)
+{
     const int N = m->size;
     printf("np.array([");
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++)
+    {
         printf("[");
-        for (int j = 0; j < N; j++) {
+        for (int j = 0; j < N; j++)
+        {
             printf("%lf", m->mem[i][j]);
-            if (j < N - 1) {
+            if (j < N - 1)
+            {
                 printf(", ");
             }
         }
         printf("]");
-        if (i < N - 1) {
+        if (i < N - 1)
+        {
             printf(",\n          ");
         }
     }
     printf("])\n");
 }
 
-matrix_t *matrix_mult_naive(matrix_t *A, matrix_t *B, double *runtime = NULL) {
-    if (A->size != B->size) {
-        return NULL;
-    }
-
+void matrix_mult_naive(matrix_t *A, matrix_t *B, matrix_t **C, double *runtime)
+{
     const int N = A->size;
-    matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
-    C->size = N;
+    (*C)->size = N;
 
-    if (runtime != NULL) {
-	*runtime = get_time();
+    memset((*C)->mem, 0, sizeof((*C)->mem));
+
+    if (runtime != NULL)
+    {
+        *runtime = get_time();
     }
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            for (int k = 0; k < N; k++) {
-                C->mem[i][j] += A->mem[i][k] * B->mem[k][j];
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            (*C)->mem[i][j] = 0.0;
+            for (int k = 0; k < N; k++)
+            {
+                (*C)->mem[i][j] += A->mem[i][k] * B->mem[k][j];
             }
         }
     }
-    if (runtime != NULL) {
-	    *runtime = get_time() - *runtime;
+    if (runtime != NULL)
+    {
+        *runtime = get_time() - *runtime;
     }
-
-    return C;
 }
 
-matrix_t *matrix_mult_block(matrix_t *A, matrix_t *B, int block_size, double *runtime = NULL) {
-    if (A->size != B->size) {
-        return NULL;
-    }
-
-    if (block_size <= 0) {
+void matrix_mult_block(matrix_t *A, matrix_t *B, int block_size, matrix_t **C, double *runtime)
+{
+    if (block_size <= 0)
+    {
         fprintf(stderr, "Block size must be positive (receiving %d)\n", block_size);
         exit(-1);
     }
 
     const int N = A->size;
-    matrix_t *C;
-    const int BLOCK_COUNT = N / block_size;
 
-    C = (matrix_t *)calloc(1, sizeof(matrix_t));
-    C->size = N;
+    (*C)->size = N;
+    memset((*C)->mem, 0, sizeof((*C)->mem));
 
-    if (N % block_size != 0) {
-	    fprintf(stderr, "Block size must divide matrix size.");
-	    exit(-1);
+    if (N % block_size != 0)
+    {
+        fprintf(stderr, "Block size must divide matrix size.");
+        exit(-1);
     }
 
-    if (runtime != NULL) {
-	    *runtime = get_time();
-    } 
-    for (int bi = 0; bi < N; bi += block_size) {
-        for (int bj = 0; bj < N; bj += block_size) {
-            for (int i = bi; i < min(bi + block_size, N); i++) {
-                for (int j = bj; j < min(bj + block_size, N); j++) {
-                    double sum = 0;
-                    for (int k = 0; k < N; k++) {
-                        sum += A->mem[i][k] * B->mem[k][j];
+    if (runtime != NULL)
+    {
+        *runtime = get_time();
+    }
+    for (int bi = 0; bi < N; bi += block_size)
+    {
+        for (int bj = 0; bj < N; bj += block_size)
+        {
+            for (int bk = 0; bk < N; bk += block_size)
+            {
+                for (int i = bi; i < min(bi + block_size, N); i++)
+                {
+                    for (int j = bj; j < min(bj + block_size, N); j++)
+                    {
+                        double sum = 0;
+                        for (int k = bk; k < min(bk + block_size, N); k++)
+                        {
+                            sum += A->mem[i][k] * B->mem[k][j];
+                        }
+                        (*C)->mem[i][j] += sum;
                     }
-                    C->mem[i][j] += sum;
                 }
             }
         }
     }
-    if (runtime != NULL) {
-	    *runtime = get_time() - *runtime;
+    if (runtime != NULL)
+    {
+        *runtime = get_time() - *runtime;
     }
-
-    return C;
 }
 
-matrix_t *matrix_mult_cblas(matrix_t *A, matrix_t *B, double *runtime = NULL) {
+void matrix_mult_cblas(matrix_t *A, matrix_t *B, matrix_t **C, double *runtime)
+{
     const int N = A->size;
 
     double *A_d = (double *)calloc(N * N, sizeof(double));
     double *B_d = (double *)calloc(N * N, sizeof(double));
     double *C_d = (double *)calloc(N * N, sizeof(double));
-    
-    matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
-    C->size = N;
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
+    (*C)->size = N;
+    memset((*C)->mem, 0, sizeof((*C)->mem));
+
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
             A_d[i * N + j] = A->mem[i][j];
             B_d[i * N + j] = B->mem[i][j];
         }
     }
 
-    if (runtime == NULL) {
-	    *runtime = get_time();
+    if (runtime != NULL)
+    {
+        *runtime = get_time();
     }
     cblas_dgemm(
         CblasRowMajor,
@@ -253,95 +316,125 @@ matrix_t *matrix_mult_cblas(matrix_t *A, matrix_t *B, double *runtime = NULL) {
         N,
         B_d,
         N,
-        0.0,    
+        0.0,
         C_d,
-        N    
-    );
-    if (runtime == NULL) {
-	    *runtime = get_time() - *runtime;
+        N);
+    if (runtime != NULL)
+    {
+        *runtime = get_time() - *runtime;
     }
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            C->mem[i][j] = C_d[i * N + j];
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            (*C)->mem[i][j] = C_d[i * N + j];
         }
     }
 
     free(A_d);
     free(B_d);
     free(C_d);
-
-    return C;
 }
 
-void generate_matrices(bool verbose, int size, int min_val, int max_val, matrix_t **A, matrix_t **B) {
-    if (verbose) {
+void generate_matrices(bool verbose, int size, int min_val, int max_val, matrix_t **A, matrix_t **B)
+{
+    if (verbose)
+    {
         printf("Two matrices of size %dx%d with values in range [%d, %d]\n", size, size, min_val, max_val);
     }
-    
+
     *A = matrix_new(size, min_val, max_val);
-    if (verbose) {
+    if (verbose)
+    {
         matrix_print(*A);
     }
 
     *B = matrix_new(size, min_val, max_val);
-    if (verbose) {
+    if (verbose)
+    {
         matrix_print(*B);
     }
 }
 
-void benchmark(args_t args) {
+void benchmark(args_t args)
+{
     matrix_t *A = NULL;
     matrix_t *B = NULL;
     matrix_t *C = NULL;
+    double runtime = 0.0;
+    double total_runtime = 0.0;
+    const int repeat_count = args.flag_repeat;
 
     generate_matrices(
-        args.flag_verbose, 
-        args.flag_size, 
-        args.value_min, 
-        args.value_max, 
-        &A, 
-        &B
-    );
+        args.flag_verbose,
+        args.flag_size,
+        args.value_min,
+        args.value_max,
+        &A,
+        &B);
 
-    if (strcmp(args.flag_variant, VARIANT_NAIVE) == 0) {
-        C = matrix_mult_naive(A, B);
-    } else if (strcmp(args.flag_variant, VARIANT_BLOCK) == 0) {
-        C = matrix_mult_block(A, B, args.flag_block);
-    } else if (strcmp(args.flag_variant, VARIANT_BLAS) == 0) {
-        C = matrix_mult_cblas(A, B);
-    } else {
+    C = (matrix_t *)calloc(1, sizeof(matrix_t));
+
+    if (strcmp(args.flag_variant, VARIANT_NAIVE) == 0)
+    {
+        for (int i = 0; i < repeat_count; i++)
+        {
+            matrix_mult_naive(A, B, &C, &runtime);
+            total_runtime += runtime;
+        }
+    }
+    else if (strcmp(args.flag_variant, VARIANT_BLOCK) == 0)
+    {
+        for (int i = 0; i < repeat_count; i++)
+        {
+            matrix_mult_block(A, B, args.flag_block, &C, &runtime);
+            total_runtime += runtime;
+        }
+    }
+    else if (strcmp(args.flag_variant, VARIANT_BLAS) == 0)
+    {
+        for (int i = 0; i < repeat_count; i++)
+        {
+            matrix_mult_cblas(A, B, &C, &runtime);
+            total_runtime += runtime;
+        }
+    }
+    else
+    {
         fprintf(stderr, "Unsupported variant: %s\n", args.flag_variant);
         exit(-1);
     }
 
-    if (C == NULL) {
+    if (C == NULL)
+    {
         fprintf(stderr, "Can't perform matrix multiplication for variant '%s'\n", args.flag_variant);
-    } else if (args.flag_verbose) {
+    }
+    else if (args.flag_verbose)
+    {
         printf("The result matrix is:\n");
         matrix_print(C);
     }
 
-    if (A != NULL) {
-        free(A);
-    }
-    
-    if (B != NULL) {
-        free(B);
-    }
+    printf("Total time over %d runs: %lf seconds\n", repeat_count, total_runtime);
 
-    if (C != NULL) {
-        free(C);
-    }
+    free(A);
+    free(B);
+    free(C);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     args_t args = args_parse(argc, argv);
 
-    if (args.flag_help) {
+    if (args.flag_help)
+    {
         show_help(argv[0]);
-    } else {
-        if (args.flag_size <= 0) {
+    }
+    else
+    {
+        if (args.flag_size <= 0)
+        {
             fprintf(stderr, "Size of matrix should not be positive (but receiving %d)\n", args.flag_size);
             return -1;
         }
