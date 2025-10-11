@@ -36,7 +36,17 @@ def get_cpu_cache_linux():
     cache_info = {}
     
     try:
-        # Try lscpu command
+        # Method 1: Try /proc/cpuinfo
+        if os.path.exists('/proc/cpuinfo'):
+            with open('/proc/cpuinfo', 'r') as f:
+                content = f.read()
+                
+                # Look for cache size information
+                cache_size_match = re.search(r'cache size\s*:\s*(\d+)\s*KB', content)
+                if cache_size_match:
+                    cache_info['l2_cache'] = f"{cache_size_match.group(1)} KB"
+        
+        # Method 2: Try lscpu command
         result = run_command(['lscpu'], shell=False)
         if result and result.returncode == 0:
             lines = result.stdout.split('\n')
@@ -49,6 +59,37 @@ def get_cpu_cache_linux():
                     cache_info['l2_cache'] = line.split(':')[1].strip()
                 elif 'L3 cache' in line:
                     cache_info['l3_cache'] = line.split(':')[1].strip()
+        
+        # Method 3: Try /sys/devices/system/cpu/cpu0/cache/
+        cache_path = '/sys/devices/system/cpu/cpu0/cache'
+        if os.path.exists(cache_path):
+            for cache_dir in os.listdir(cache_path):
+                cache_full_path = os.path.join(cache_path, cache_dir)
+                if os.path.isdir(cache_full_path):
+                    try:
+                        # Read cache level
+                        level_file = os.path.join(cache_full_path, 'level')
+                        if os.path.exists(level_file):
+                            with open(level_file, 'r') as f:
+                                level = f.read().strip()
+                        
+                        # Read cache size
+                        size_file = os.path.join(cache_full_path, 'size')
+                        if os.path.exists(size_file):
+                            with open(size_file, 'r') as f:
+                                size = f.read().strip()
+                        
+                        # Read cache type
+                        type_file = os.path.join(cache_full_path, 'type')
+                        if os.path.exists(type_file):
+                            with open(type_file, 'r') as f:
+                                cache_type = f.read().strip()
+                        
+                        cache_key = f"l{level}_{cache_type.lower()}_cache"
+                        cache_info[cache_key] = size
+                    except:
+                        continue
+                        
     except Exception as e:
         print(f"Error getting Linux cache info: {e}")
     
