@@ -366,15 +366,19 @@ def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
             runtime_match = re.search(r'\d+\.\d+', output.stdout.upper())
             if runtime_match:
                 runtime_val = float(runtime_match.group())
+                avg_time = runtime_val / repeat
                 run = {
-                    "average": round(runtime_val / repeat, 6),
+                    "average": avg_time if avg_time >= 1e-6 else round(avg_time, 6),
                     "total": runtime_val,
                     "repeat": repeat,
                 }
                 if cache_blocking:
                     run['block'] = blk_size
 
-            print(f"✅ Total runtime{f" for block size {blk_size}" if blk_size else ""}: {runtime_val:.6f}s")
+            if cache_blocking:
+                print(f"✅ Total runtime for block size {blk_size}: {runtime_val:.6f}s")
+            else:
+                print(f"✅ Total runtime: {runtime_val:.6f}s")
             return run
         else:
             print(f"❌ Execution error: {output.stderr}")
