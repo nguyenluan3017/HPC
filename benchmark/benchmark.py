@@ -397,18 +397,54 @@ def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
         results.append(result)
 
     output_result(results, output_dir, variant)
+    
+def build_mmult():
+    os_name_short = platform.system().lower()
+    exec_path = os.path.join(os.getcwd(), "bin", f"mmult.{os_name_short}")
+
+    print(f"Attempting to build with build-mmult.sh...")
+    build_script = os.path.join(os.getcwd(), "build-mmult.sh")
+    if not os.path.exists(build_script):
+        print(f"Build script not found: {build_script}")
+        return 1
+
+    # Make sure the build script is executable
+    try:
+        os.chmod(build_script, os.stat(build_script).st_mode | 0o111)
+    except Exception as e:
+        print(f"Warning: could not chmod build script: {e}")
+
+    with spinner("Building mmult binary"):
+        build_result = run_command([build_script], shell=True)
+
+    if not build_result or build_result.returncode != 0:
+        print("Failed to build mmult binary.")
+        if build_result:
+            print(build_result.stdout or "")
+            print(build_result.stderr or "")
+        return 1
+
+    # Verify the binary exists after build
+    if not os.path.exists(exec_path):
+        print(f"Build finished but mmult binary still missing at {exec_path}")
+        return 1
+
+    print(f"Build successful: {exec_path} found.")
+    return exec_path
 
 def main():
     args_parser = argparse.ArgumentParser()
-    args_parser.add_argument("--output-dir", type=str, help="Output directory for results")
+    args_parser.add_argument("--output-dir", type=str, help="Output directory for results", required=True)
     args = args_parser.parse_args()
 
     print("Matrix Multiplication Benchmark - All Variants")
     print("=" * 60)
+    
+    # Ensure build directory exists and the mmult binary is present; build if missing.
+    exec_name = build_mmult()
 
     # Get and print system information
     sys_info = print_system_info()
-    exec_name = os.getcwd() + "/bin/mmult." + sys_info["os_name"]
     variants = [('naive', 10), ('block', 20), ('blas-block', 30), ('blas', 40)]
 
     # Suggest optimal block sizes
