@@ -4,9 +4,35 @@ import os
 import subprocess
 import platform
 import re
-import pprint
 import argparse
 import json
+from contextlib import contextmanager
+import threading
+import time
+
+@contextmanager
+def spinner(message, chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"):
+    stop_event = threading.Event()
+    
+    def spin():
+        idx = 0
+        while not stop_event.is_set():
+            sys.stdout.write(f"\r{chars[idx % len(chars)]} {message}")
+            sys.stdout.flush()
+            idx += 1
+            time.sleep(0.1)
+        sys.stdout.write(f"\r{' ' * (len(message) + 2)}\r")
+        sys.stdout.flush()
+    
+    spinner_thread = threading.Thread(target=spin)
+    spinner_thread.daemon = True
+    spinner_thread.start()
+    
+    try:
+        yield
+    finally:
+        stop_event.set()
+        spinner_thread.join()
 
 def run_command(command, capture_output=True, text=True, shell=False):
     """
@@ -306,65 +332,94 @@ def output_result(result, output_dir, variant):
         f.write(json_result)
     
     print(f"\n=== Results written to {output_file} ===")
-    print(json_result)
-
-def main():
-    print("main()")
-    args_parser = argparse.ArgumentParser()
-    args_parser.add_argument("--variant", type=str, choices=["block", "naive", "blas", "blas-block"])
-    args_parser.add_argument("--output-dir", type=str, help="Output directory for results")
-    args_parser.add_argument("--repeat", type=int, default=5)
-    args = args_parser.parse_args()
     
-    print("System Information and CPU Cache Detection")
-    print("=" * 50)
+def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
+    results = []
+    cache_blocking = 'block' in variant
     
-    # Get and print system information
-    sys_info = print_system_info()
-    exec_name = os.getcwd() + "/bin/mmult." + sys_info["os_name"]
-    variant = args.variant
-    repeat = args.repeat
-
-    # Suggest optimal block sizes
-    print(f"\n=== Optimization Suggestions ===")
-    block_sizes = get_optimal_block_sizes(sys_info['cache'])
-    print(f"Suggested block sizes for matrix multiplication:")
-    for lv, block_size in block_sizes.items():
-        print(f"{lv}: {block_size}")
-
-    print(f"\n=== Benchmark Commands ===")
-    result = []
-    for lv, sizes in block_sizes.items():
+    for cache_lv, sizes in block_sizes.items():
         runs = []
         matrix_size = lcm(*sizes)
-        print()
-        print(f"{10 * '*'} {lv} [size: {matrix_size}] {10 * '*'}")
+        
+        print(f"\n{10 * '*'} {cache_lv} [ matrix size: {matrix_size} ] {10 * '*'}")
+        
         for blk_size in sizes:
             command = [
                 exec_name,
                 "--variant", variant,
                 "--size", str(matrix_size),
-                "--block", str(blk_size),
                 "--repeat", str(repeat)
             ]
-            output = run_command(command)
+            
+            if cache_blocking:
+                command.extend(["--block", str(blk_size)])
+            
+            spinner_msg = f"Running: {' '.join(command)}"
+            with spinner(spinner_msg):
+                output = run_command(command)
+                
             if output and output.returncode == 0:
                 runtime_match = re.search(r'\d+\.\d+', output.stdout.upper())
                 if runtime_match:
                     runtime_val = float(runtime_match.group())
-                    runs.append({
-                        "runtime": runtime_val,
+                    run = {
+                        "average-runtime": round(runtime_val / repeat, 6),
+                        "total-runtime": runtime_val,
                         "repeat": repeat,
-                        "block": blk_size
-                    })
-        result.append({
-            "cache": lv,
-            "size": matrix_size,
-            "variant": variant,
-            "run": runs
-        })
+                    }
+                    if cache_blocking:
+                        run['block'] = blk_size
+                    runs.append(run)
+                    
+                results.append({
+                    "cache": cache_lv,
+                    "size": matrix_size,
+                    "variant": variant,
+                    "run": runs
+                })
+                print(f" ✅ Total runtime: {runtime_val:.4f}s")
+            else:
+                print(f" ❌ Execution error: {output.stderr}")
     
-    output_result(result, args.output_dir, variant)
+    output_result(results, output_dir, variant)
+    
+def main():
+    args_parser = argparse.ArgumentParser()
+    args_parser.add_argument("--output-dir", type=str, help="Output directory for results")
+    args = args_parser.parse_args()
+    
+    print("Matrix Multiplication Benchmark - All Variants")
+    print("=" * 60)
+    
+    # Get and print system information
+    sys_info = print_system_info()
+    exec_name = os.getcwd() + "/bin/mmult." + sys_info["os_name"]
+    variants = [('naive', 10), ('block', 20), ('blas-block', 30), ('blas', 40)]
+    
+    # Check if executable exists
+    if not os.path.exists(exec_name):
+        print(f"\nError: Executable not found at {exec_name}")
+        print("Please run bin/build-mmult.sh to compile matrix multiplication program.")
+        return 1
+    
+    # Suggest optimal block sizes
+    print(f"\n=== Optimization Suggestions ===")
+    block_sizes = get_optimal_block_sizes(sys_info['cache'])
+    print(f"Suggested block sizes for matrix multiplication:")
+    for cache_lv, block_size in block_sizes.items():
+        print(f"{cache_lv}: {block_size}")
+        
+    for variant, repeat in variants:
+        print(f"\n=== Running Benchmarks for {variant} (repeat={repeat}) ===")
+        run_benchmark_variant(variant, repeat, exec_name, block_sizes, args.output_dir)
+    
+    print(f"\n🎉 All benchmarks completed!")
+    print(f"📁 Results saved to: {args.output_dir}/")
+    print(f"📄 Files created:")
+    for variant, _ in variants:
+        output_file = os.path.join(args.output_dir, f"{variant}.json")
+        if os.path.exists(output_file):
+            print(f"   - {variant}.json")
     
     return 0
 
