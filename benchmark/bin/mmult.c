@@ -36,7 +36,7 @@ typedef struct
 typedef struct
 {
     int size;
-    double mem[MAX_SIZE][MAX_SIZE];
+    double *mem;
 } matrix_t;
 
 void show_help(const char *prog_nam)
@@ -161,20 +161,22 @@ double get_time()
     return ts.tv_sec + ts.tv_nsec * 1e-9;
 }
 
-matrix_t *matrix_new(int N, int min_val, int max_val)
-{
-    matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
-
-    C->size = N;
+void matrix_random(matrix_t *C, int min_val, int max_val) {
     int range = max_val - min_val + 1;
-    for (int i = 0; i < N; i++)
+    for (int i = 0; i < C->size; i++)
     {
-        for (int j = 0; j < N; j++)
+        for (int j = 0; j < C->size; j++)
         {
-            C->mem[i][j] = (rand() % range) + min_val;
+            C->mem[i * C->size + j] = (rand() % range) + min_val;
         }
     }
+}
 
+matrix_t *matrix_new(int N)
+{
+    matrix_t *C = (matrix_t *)calloc(1, sizeof(matrix_t));
+    C->mem = (double *)calloc(N * N, sizeof(double));
+    C->size = N;
     return C;
 }
 
@@ -187,7 +189,7 @@ void matrix_print(matrix_t *m)
         printf("[");
         for (int j = 0; j < N; j++)
         {
-            printf("%lf", m->mem[i][j]);
+            printf("%lf", m->mem[i * N + j]);
             if (j < N - 1)
             {
                 printf(", ");
@@ -202,12 +204,12 @@ void matrix_print(matrix_t *m)
     printf("])\n");
 }
 
-void matrix_mult_naive(matrix_t *A, matrix_t *B, matrix_t **C, double *runtime)
+void matrix_mult_naive(matrix_t *A, matrix_t *B, matrix_t *C, double *runtime)
 {
     const int N = A->size;
-    (*C)->size = N;
+    C->size = N;
 
-    memset((*C)->mem, 0, sizeof((*C)->mem));
+    memset(C->mem, 0, sizeof(double) * N * N);
 
     if (runtime != NULL)
     {
@@ -217,10 +219,10 @@ void matrix_mult_naive(matrix_t *A, matrix_t *B, matrix_t **C, double *runtime)
     {
         for (int j = 0; j < N; j++)
         {
-            (*C)->mem[i][j] = 0.0;
+            C->mem[i * N + j] = 0.0;
             for (int k = 0; k < N; k++)
             {
-                (*C)->mem[i][j] += A->mem[i][k] * B->mem[k][j];
+                C->mem[i * N + j] += A->mem[i * N + k] * B->mem[k * N + j];
             }
         }
     }
@@ -230,7 +232,7 @@ void matrix_mult_naive(matrix_t *A, matrix_t *B, matrix_t **C, double *runtime)
     }
 }
 
-void matrix_mult_block(matrix_t *A, matrix_t *B, int block_size, matrix_t **C, double *runtime)
+void matrix_mult_block(matrix_t *A, matrix_t *B, int block_size, matrix_t *C, double *runtime)
 {
     if (block_size <= 0)
     {
@@ -239,66 +241,48 @@ void matrix_mult_block(matrix_t *A, matrix_t *B, int block_size, matrix_t **C, d
     }
 
     const int N = A->size;
-
-    (*C)->size = N;
-    memset((*C)->mem, 0, sizeof((*C)->mem));
-
-    if (N % block_size != 0)
-    {
-        fprintf(stderr, "Block size must divide matrix size.");
-        exit(-1);
-    }
+    C->size = N;
+    memset(C->mem, 0, sizeof(double) * N * N);
 
     if (runtime != NULL)
     {
         *runtime = get_time();
     }
+
     for (int bi = 0; bi < N; bi += block_size)
     {
         for (int bj = 0; bj < N; bj += block_size)
         {
             for (int bk = 0; bk < N; bk += block_size)
             {
-                for (int i = bi; i < min(bi + block_size, N); i++)
+                int i_end = min(bi + block_size, N);
+                int j_end = min(bj + block_size, N);
+                int k_end = min(bk + block_size, N);
+                
+                for (int i = bi; i < i_end; i++)
                 {
-                    for (int j = bj; j < min(bj + block_size, N); j++)
+                    for (int k = bk; k < k_end; k++)
                     {
-                        double sum = 0;
-                        for (int k = bk; k < min(bk + block_size, N); k++)
+                        double a_ik = A->mem[i * N + k];
+                        for (int j = bj; j < j_end; j++)
                         {
-                            sum += A->mem[i][k] * B->mem[k][j];
+                            C->mem[i * N + j] += a_ik * B->mem[k * N + j];
                         }
-                        (*C)->mem[i][j] += sum;
                     }
                 }
             }
         }
     }
+
     if (runtime != NULL)
     {
         *runtime = get_time() - *runtime;
     }
 }
 
-void matrix_mult_cblas(matrix_t *A, matrix_t *B, matrix_t **C, double *runtime)
+void matrix_mult_cblas(matrix_t *A, matrix_t *B, matrix_t *C, double *runtime)
 {
     const int N = A->size;
-
-    double *A_d = (double *)calloc(N * N, sizeof(double));
-    double *B_d = (double *)calloc(N * N, sizeof(double));
-    double *C_d = (double *)calloc(N * N, sizeof(double));
-
-    (*C)->size = N;
-    memset((*C)->mem, 0, sizeof((*C)->mem));
-
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            A_d[i * N + j] = A->mem[i][j];
-            B_d[i * N + j] = B->mem[i][j];
-        }
-    }
 
     if (runtime != NULL)
     {
@@ -312,49 +296,43 @@ void matrix_mult_cblas(matrix_t *A, matrix_t *B, matrix_t **C, double *runtime)
         N,
         N,
         1.0,
-        A_d,
+        A->mem,
         N,
-        B_d,
+        B->mem,
         N,
         0.0,
-        C_d,
+        C->mem,
         N);
     if (runtime != NULL)
     {
         *runtime = get_time() - *runtime;
     }
 
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            (*C)->mem[i][j] = C_d[i * N + j];
-        }
-    }
-
-    free(A_d);
-    free(B_d);
-    free(C_d);
+    C->size = N;
 }
 
-void generate_matrices(bool verbose, int size, int min_val, int max_val, matrix_t **A, matrix_t **B)
+void generate_matrices(bool verbose, int size, int min_val, int max_val, matrix_t **A, matrix_t **B, matrix_t **C)
 {
     if (verbose)
     {
         printf("Two matrices of size %dx%d with values in range [%d, %d]\n", size, size, min_val, max_val);
     }
 
-    *A = matrix_new(size, min_val, max_val);
+    *A = matrix_new(size);
+    matrix_random(*A, min_val, max_val);
     if (verbose)
     {
         matrix_print(*A);
     }
 
-    *B = matrix_new(size, min_val, max_val);
+    *B = matrix_new(size);
+    matrix_random(*B, min_val, max_val);
     if (verbose)
     {
         matrix_print(*B);
     }
+    
+    *C = matrix_new(size);
 }
 
 void benchmark(args_t args)
@@ -372,15 +350,14 @@ void benchmark(args_t args)
         args.value_min,
         args.value_max,
         &A,
-        &B);
-
-    C = (matrix_t *)calloc(1, sizeof(matrix_t));
+        &B,
+        &C);
 
     if (strcmp(args.flag_variant, VARIANT_NAIVE) == 0)
     {
         for (int i = 0; i < repeat_count; i++)
         {
-            matrix_mult_naive(A, B, &C, &runtime);
+            matrix_mult_naive(A, B, C, &runtime);
             total_runtime += runtime;
         }
     }
@@ -388,7 +365,7 @@ void benchmark(args_t args)
     {
         for (int i = 0; i < repeat_count; i++)
         {
-            matrix_mult_block(A, B, args.flag_block, &C, &runtime);
+            matrix_mult_block(A, B, args.flag_block, C, &runtime);
             total_runtime += runtime;
         }
     }
@@ -396,7 +373,7 @@ void benchmark(args_t args)
     {
         for (int i = 0; i < repeat_count; i++)
         {
-            matrix_mult_cblas(A, B, &C, &runtime);
+            matrix_mult_cblas(A, B, C, &runtime);
             total_runtime += runtime;
         }
     }

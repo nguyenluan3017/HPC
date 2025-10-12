@@ -4,6 +4,7 @@ import os
 import subprocess
 import platform
 import re
+import pprint
 
 def run_command(command, capture_output=True, text=True, shell=False):
     """
@@ -258,6 +259,36 @@ def get_optimal_block_sizes(cache_info):
     
     return block_sizes
 
+def gcd(*numbers):
+    if not numbers:
+        return 0
+    if len(numbers) == 1:
+        return abs(numbers[0])
+    if len(numbers) == 2:
+        a, b = numbers[0], numbers[1]
+        while b:
+            a, b = b, a % b
+        return a
+    result = abs(numbers[0])
+    for num in numbers[1:]:
+        result = gcd(result, abs(num))
+        if result == 1:
+            break
+    return result
+
+def lcm(*numbers):
+    if not numbers:
+        return 0
+    if len(numbers) == 1:
+        return numbers[0]
+    if len(numbers) == 2:
+        a, b = numbers[0], numbers[1]
+        return (a // gcd(a, b)) * b
+    result = abs(numbers[0])
+    for num in numbers[1:]:
+        result = lcm(result, abs(num))
+    return result
+
 def main():
     """Main function to demonstrate system information gathering"""
     print("System Information and CPU Cache Detection")
@@ -265,7 +296,8 @@ def main():
     
     # Get and print system information
     sys_info = print_system_info()
-    exec_name = "./bin/mmult." + sys_info["os_name"]
+    exec_name = os.getcwd() + "/bin/mmult." + sys_info["os_name"]
+    variant = "block"
 
     # Suggest optimal block sizes
     print(f"\n=== Optimization Suggestions ===")
@@ -273,13 +305,39 @@ def main():
     print(f"Suggested block sizes for matrix multiplication:")
     for lv, block_size in block_sizes.items():
         print(f"{lv}: {block_size}")
-    
-    # Example usage for benchmarking
-    print(f"\n=== Example Benchmark Commands ===")
+
+    print(f"\n=== Benchmark Commands ===")
+    result = []
+    repeat = 5
     for lv, sizes in block_sizes.items():
+        runs = []
+        matrix_size = lcm(*sizes)
+        print()
+        print(f"{10 * '*'} {lv} [size: {matrix_size}] {10 * '*'}")
         for blk_size in sizes:
-            print(f"{exec_name} --variant block --size 1024 --block {blk_size} --repeat 100")
-    
+            command = [
+                exec_name,
+                "--variant", variant,
+                "--size", str(matrix_size),
+                "--block", str(blk_size),
+                "--repeat", str(repeat)
+            ]
+            output = run_command(command)
+            runtime_match = re.search(r'\d+\.\d+', output.stdout.upper())
+            if runtime_match:
+                runtime_val = float(runtime_match.group())
+                runs.append({
+                    "runtime": runtime_val,
+                    "repeat": repeat,
+                    "block": blk_size
+                })
+        result.append({
+            "cache": lv,
+            "size": matrix_size,
+            "variant": variant,
+            "run": runs
+        })
+    pprint.pprint(result)
     return 0
 
 if __name__ == "__main__":
