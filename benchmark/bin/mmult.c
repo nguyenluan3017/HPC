@@ -18,6 +18,7 @@ const char *const ARG_VALUE_RANGE = "--value-range";
 const char *const ARG_REPEAT = "--repeat"; 
 
 const char *const VARIANT_BLAS = "blas";
+const char *const VARIANT_BLAS_BLOCK = "blas-block";
 const char *const VARIANT_BLOCK = "block";
 const char *const VARIANT_NAIVE = "naive";
 
@@ -57,11 +58,13 @@ void show_help(const char *prog_nam)
     printf("  naive                  Standard triple-loop matrix multiplication\n");
     printf("  block                  Block-based matrix multiplication (cache-friendly)\n");
     printf("  blas                   BLAS library implementation\n");
+    printf("  blas-block             Block algorithm using BLAS calls for each block\n");
     printf("\n");
     printf("Examples:\n");
     printf("  %s --variant naive --size 100\n", prog_nam);
     printf("  %s --variant block --size 512 --block 64\n", prog_nam);
     printf("  %s --variant blas --size 512 --value-range 1 10\n", prog_nam);
+    printf("  %s --variant blas-block --size 512 --block 128\n", prog_nam);
     printf("  %s --variant naive --size 256 --repeat 10\n", prog_nam);  
     printf("  %s --help\n", prog_nam);
 }
@@ -311,6 +314,59 @@ void matrix_mult_cblas(matrix_t *A, matrix_t *B, matrix_t *C, double *runtime)
     C->size = N;
 }
 
+void matrix_mult_blas_block(matrix_t *A, matrix_t *B, matrix_t *C, int block_size, double *runtime)
+{
+    if (block_size <= 0)
+    {
+        fprintf(stderr, "Block size must be positive (receiving %d)\n", block_size);
+        exit(-1);
+    }
+
+    const int N = A->size;
+    C->size = N;
+    memset(C->mem, 0, sizeof(double) * N * N);
+
+    if (runtime != NULL)
+    {
+        *runtime = get_time();
+    }
+
+    for (int bi = 0; bi < N; bi += block_size)
+    {
+        for (int bj = 0; bj < N; bj += block_size)
+        {
+            for (int bk = 0; bk < N; bk += block_size)
+            {
+                int blk_rows = min(block_size, N - bi);
+                int blk_cols = min(block_size, N - bj);
+                int blk_inner = min(block_size, N - bk);
+
+                cblas_dgemm(
+                    CblasRowMajor,
+                    CblasNoTrans,
+                    CblasNoTrans,
+                    blk_rows,
+                    blk_cols,
+                    blk_inner,
+                    1.0,
+                    &A->mem[bi * N + bk],
+                    N,
+                    &B->mem[bk * N + bj],
+                    N,
+                    1.0,
+                    &C->mem[bi * N + bj],
+                    N
+                );
+            }
+        }
+    }
+
+    if (runtime != NULL)
+    {
+        *runtime = get_time() - *runtime;
+    }
+}
+
 void generate_matrices(bool verbose, int size, int min_val, int max_val, matrix_t **A, matrix_t **B, matrix_t **C)
 {
     if (verbose)
@@ -374,6 +430,14 @@ void benchmark(args_t args)
         for (int i = 0; i < repeat_count; i++)
         {
             matrix_mult_cblas(A, B, C, &runtime);
+            total_runtime += runtime;
+        }
+    }
+    else if (strcmp(args.flag_variant, VARIANT_BLAS_BLOCK) == 0)
+    {
+        for (int i = 0; i < repeat_count; i++)
+        {
+            matrix_mult_blas_block(A, B, C, args.flag_block, &runtime);
             total_runtime += runtime;
         }
     }

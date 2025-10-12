@@ -5,6 +5,8 @@ import subprocess
 import platform
 import re
 import pprint
+import argparse
+import json
 
 def run_command(command, capture_output=True, text=True, shell=False):
     """
@@ -289,15 +291,39 @@ def lcm(*numbers):
         result = lcm(result, abs(num))
     return result
 
+def output_result(result, output_dir, variant):
+    if not output_dir:
+        print("No output directory specified")
+        return
+    
+    os.makedirs(output_dir, exist_ok=True)
+    
+    filename = f"{variant}.json"
+    output_file = os.path.join(output_dir, filename)
+    
+    json_result = json.dumps(result, indent=4, sort_keys=True)
+    with open(output_file, 'w') as f:
+        f.write(json_result)
+    
+    print(f"\n=== Results written to {output_file} ===")
+    print(json_result)
+
 def main():
-    """Main function to demonstrate system information gathering"""
+    print("main()")
+    args_parser = argparse.ArgumentParser()
+    args_parser.add_argument("--variant", type=str, choices=["block", "naive", "blas", "blas-block"])
+    args_parser.add_argument("--output-dir", type=str, help="Output directory for results")
+    args_parser.add_argument("--repeat", type=int, default=5)
+    args = args_parser.parse_args()
+    
     print("System Information and CPU Cache Detection")
     print("=" * 50)
     
     # Get and print system information
     sys_info = print_system_info()
     exec_name = os.getcwd() + "/bin/mmult." + sys_info["os_name"]
-    variant = "block" if len(sys.argv) <= 1 else sys.argv[1]
+    variant = args.variant
+    repeat = args.repeat
 
     # Suggest optimal block sizes
     print(f"\n=== Optimization Suggestions ===")
@@ -308,7 +334,6 @@ def main():
 
     print(f"\n=== Benchmark Commands ===")
     result = []
-    repeat = 5
     for lv, sizes in block_sizes.items():
         runs = []
         matrix_size = lcm(*sizes)
@@ -323,22 +348,25 @@ def main():
                 "--repeat", str(repeat)
             ]
             output = run_command(command)
-            runtime_match = re.search(r'\d+\.\d+', output.stdout.upper())
-            if runtime_match:
-                runtime_val = float(runtime_match.group())
-                runs.append({
-                    "runtime": runtime_val,
-                    "repeat": repeat,
-                    "block": blk_size
-                })
+            if output and output.returncode == 0:
+                runtime_match = re.search(r'\d+\.\d+', output.stdout.upper())
+                if runtime_match:
+                    runtime_val = float(runtime_match.group())
+                    runs.append({
+                        "runtime": runtime_val,
+                        "repeat": repeat,
+                        "block": blk_size
+                    })
         result.append({
             "cache": lv,
             "size": matrix_size,
             "variant": variant,
             "run": runs
         })
-    pprint.pprint(result)
+    
+    output_result(result, args.output_dir, variant)
+    
     return 0
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
