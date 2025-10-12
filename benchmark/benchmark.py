@@ -297,7 +297,7 @@ def main():
     # Get and print system information
     sys_info = print_system_info()
     exec_name = os.getcwd() + "/bin/mmult." + sys_info["os_name"]
-    variant = "block"
+    variant = "block" if len(sys.argv) <= 1 else sys.argv[1]
 
     # Suggest optimal block sizes
     print(f"\n=== Optimization Suggestions ===")
