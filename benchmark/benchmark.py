@@ -37,6 +37,7 @@ def spinner(message, chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"):
 def run_command(command, capture_output=True, text=True, shell=False):
     """
     Run a command and return the result with stdout, stderr, and return code.
+    Compatible with Python 3.5+
     
     Args:
         command: Command to run (string if shell=True, list if shell=False)
@@ -48,13 +49,22 @@ def run_command(command, capture_output=True, text=True, shell=False):
         CompletedProcess object with stdout, stderr, returncode attributes
     """
     try:
-        result = subprocess.run(
-            command,
-            capture_output=capture_output,
-            text=text,
-            shell=shell,
-            check=False
-        )
+        if capture_output:
+            result = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=text,
+                shell=shell,
+                check=False
+            )
+        else:
+            result = subprocess.run(
+                command,
+                universal_newlines=text,
+                shell=shell,
+                check=False
+            )
         return result
     except Exception as e:
         print(f"Error running command: {e}")
