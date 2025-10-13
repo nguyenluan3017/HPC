@@ -401,7 +401,7 @@ def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
         results.append(result)
 
     output_result(results, output_dir, variant)
-    
+
 def build_mmult():
     os_name_short = platform.system().lower()
     exec_path = os.path.join(os.getcwd(), "bin", f"mmult.{os_name_short}")
@@ -410,7 +410,7 @@ def build_mmult():
     build_script = os.path.join(os.getcwd(), "build-mmult.sh")
     if not os.path.exists(build_script):
         print(f"Build script not found: {build_script}")
-        return 1
+        exit(1)
 
     # Make sure the build script is executable
     try:
@@ -422,16 +422,16 @@ def build_mmult():
         build_result = run_command([build_script], shell=True)
 
     if not build_result or build_result.returncode != 0:
-        print("Failed to build mmult binary.")
+        print("Failed to build mmult binary: ", build_result.stderr)
         if build_result:
             print(build_result.stdout or "")
             print(build_result.stderr or "")
-        return 1
+        exit(-1)
 
     # Verify the binary exists after build
     if not os.path.exists(exec_path):
         print(f"Build finished but mmult binary still missing at {exec_path}")
-        return 1
+        exit(-1)
 
     print(f"Build successful: {exec_path} found.")
     return exec_path
@@ -443,7 +443,7 @@ def main():
 
     print("Matrix Multiplication Benchmark - All Variants")
     print("=" * 60)
-    
+
     # Ensure build directory exists and the mmult binary is present; build if missing.
     exec_name = build_mmult()
 
