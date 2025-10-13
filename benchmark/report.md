@@ -1,6 +1,6 @@
 ## Solution Explanation
 
-In all implementation, we employ cache-friendly single dimensional arrays of size N * N to represent square matrices. 
+In all implementation, we employ cache-friendly single dimensional arrays of size N * N to represent square matrices. The size of submatrices must divide N.
 
 This has some advantages:
 1. All elements are in one continueous block of memory, for example A[1 .. N * N]
@@ -31,12 +31,14 @@ for (int i = 0; i < N; i++)
 
 The function is `void matrix_mult_block(matrix_t *, matrix_t *, int, matrix_t *, double *)`.
 
-The implementation uses two optimizations:
-1. Use temparary variable `sum` to reduce pointer access to C[i][j]
-2. Divide the matrix into `N / block_size` square sub-matrices (called blocks). The three outer loops (`bi`, `bj`, and `bk`) browse through each block. 
-    - Loops `bi` and `bj` select the result block in matrix C
-    - Loop `bk` selects blocks in A and B to compute for this block in C
-3. Three inner loops `i`, `j`, and `k` 
+#### Loop Tiling
+
+The matrix is divided into `N / block_size` square sub-matrices (called blocks). The three outer loops (`bi`, `bj`, and `bk`) browse through each block. 
+- Loops `bi` and `bj` select the result block in matrix C
+- Loop `bk` selects blocks in A and B to compute for this block in C
+- The inner loops `i`, `j`, and `k` perform actual matrix multiplication.
+
+In additon, we use a temparary variable `sum` to reduce pointer access to `C[i][j]`.
 
 ```c
 for (int bi = 0; bi < N; bi += block_size)
@@ -53,7 +55,7 @@ for (int bi = 0; bi < N; bi += block_size)
             {
                 for (int j = bj; j < j_end; j++)
                 {
-                    double sum = 0; // temparary variable to store summation
+                    register double sum = 0; // register variable to store summation
                     for (int k = bk; k < k_end; k++)
                     {
                         sum += A->mem[i * N + k] * B->mem[k * N + j]; // loop tiling
@@ -65,3 +67,73 @@ for (int bi = 0; bi < N; bi += block_size)
     }
 }
 ```
+
+#### Cache Benefits
+
+1. Spatial locality: The block is sufficient small, so access to consecutive elements in array `A` is predicted by the CPU for cache optimization.
+
+2. Temperal locality: 
+- Variable `sum` is stored in CPU register for fast access. 
+- Elements from `A[i * N]` to `A[i * N + k]` are reused $blockSize^2$ times within `j` loop.
+
+### Multiplication of matrix blocks using cblas_dgemm in ijk implementation
+
+The function of this implemetation is `matrix_mult_blas_block`.
+
+Instead of three inner loops `i`, `j`, and `k`, this implementation employs Basic Linear Algebra Subprogram (BLAS) to multiply the sub-matrices.
+
+```c
+for (int bi = 0; bi < N; bi += block_size)
+{
+    for (int bj = 0; bj < N; bj += block_size)
+    {
+        for (int bk = 0; bk < N; bk += block_size)
+        {
+            int blk_rows = min(block_size, N - bi);
+            int blk_cols = min(block_size, N - bj);
+            int blk_inner = min(block_size, N - bk);
+
+            cblas_dgemm(
+                CblasRowMajor,
+                CblasNoTrans,
+                CblasNoTrans,
+                blk_rows,
+                blk_cols,
+                blk_inner,
+                1.0,
+                &A->mem[bi * N + bk],
+                N,
+                &B->mem[bk * N + bj],
+                N,
+                1.0,
+                &C->mem[bi * N + bj],
+                N
+            );
+        }
+    }
+}
+```
+
+### Non-blocking BLAS dgemm routine
+
+In the function `matrix_mult_cblas`, we invoke BLAS dgemm to multiply A by B.
+
+```c
+cblas_dgemm(
+    CblasRowMajor,
+    CblasNoTrans,
+    CblasNoTrans,
+    N,
+    N,
+    N,
+    1.0,
+    A->mem,
+    N,
+    B->mem,
+    N,
+    0.0,
+    C->mem,
+    N);
+```
+## Experimental Results
+
