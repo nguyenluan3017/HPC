@@ -264,13 +264,14 @@ void matrix_mult_block(matrix_t *A, matrix_t *B, int block_size, matrix_t *C, do
                 
                 for (int i = bi; i < i_end; i++)
                 {
-                    for (int k = bk; k < k_end; k++)
+                    for (int j = bj; j < j_end; j++)
                     {
-                        double a_ik = A->mem[i * N + k];
-                        for (int j = bj; j < j_end; j++)
+                        double sum = 0;
+                        for (int k = bk; k < k_end; k++)
                         {
-                            C->mem[i * N + j] += a_ik * B->mem[k * N + j];
+                            sum += A->mem[i * N + k] * B->mem[k * N + j];
                         }
+                        C->mem[i * N + j] = sum;
                     }
                 }
             }

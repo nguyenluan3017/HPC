@@ -384,7 +384,7 @@ def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
             print(f"❌ Execution error: {output.stderr}")
 
     for cache_lv, sizes in block_sizes.items():
-        matrix_size = lcm(*sizes)
+        matrix_size = min(lcm(*sizes) * 3, 4096)
         result = {
             "cache": cache_lv,
             "matrix-size": matrix_size,
@@ -449,7 +449,7 @@ def main():
 
     # Get and print system information
     sys_info = print_system_info()
-    variants = [('naive', 10), ('block', 20), ('blas-block', 30), ('blas', 40)]
+    variants = [('naive', 5), ('block', 20), ('blas-block', 30), ('blas', 40)]
 
     # Suggest optimal block sizes
     print(f"\n=== Optimization Suggestions ===")

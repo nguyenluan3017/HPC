@@ -4,40 +4,40 @@
         "matrix-size": 192,
         "runtime": [
             {
-                "average": 0.03365615,
+                "average": 0.03250235,
                 "block": 16,
                 "repeat": 20,
-                "total": 0.673123
+                "total": 0.650047
             },
             {
-                "average": 0.0335275,
+                "average": 0.02948555,
                 "block": 24,
                 "repeat": 20,
-                "total": 0.67055
+                "total": 0.589711
             },
             {
-                "average": 0.03204445,
+                "average": 0.031880399999999996,
                 "block": 32,
                 "repeat": 20,
-                "total": 0.640889
+                "total": 0.637608
             },
             {
-                "average": 0.0309128,
+                "average": 0.0318927,
                 "block": 48,
                 "repeat": 20,
-                "total": 0.618256
+                "total": 0.637854
             },
             {
-                "average": 0.03234785,
+                "average": 0.031796000000000005,
                 "block": 64,
                 "repeat": 20,
-                "total": 0.646957
+                "total": 0.63592
             },
             {
-                "average": 0.0310656,
+                "average": 0.03080055,
                 "block": 96,
                 "repeat": 20,
-                "total": 0.621312
+                "total": 0.616011
             }
         ],
         "variant": "block"
@@ -47,40 +47,40 @@
         "matrix-size": 192,
         "runtime": [
             {
-                "average": 0.034080349999999995,
+                "average": 0.029779800000000002,
                 "block": 16,
                 "repeat": 20,
-                "total": 0.681607
+                "total": 0.595596
             },
             {
-                "average": 0.03481265,
+                "average": 0.029844799999999998,
                 "block": 24,
                 "repeat": 20,
-                "total": 0.696253
+                "total": 0.596896
             },
             {
-                "average": 0.03332235,
+                "average": 0.02926125,
                 "block": 32,
                 "repeat": 20,
-                "total": 0.666447
+                "total": 0.585225
             },
             {
-                "average": 0.03236335,
+                "average": 0.031163249999999997,
                 "block": 48,
                 "repeat": 20,
-                "total": 0.647267
+                "total": 0.623265
             },
             {
-                "average": 0.03301355,
+                "average": 0.03203205,
                 "block": 64,
                 "repeat": 20,
-                "total": 0.660271
+                "total": 0.640641
             },
             {
-                "average": 0.0311567,
+                "average": 0.028613499999999997,
                 "block": 96,
                 "repeat": 20,
-                "total": 0.623134
+                "total": 0.57227
             }
         ],
         "variant": "block"
@@ -90,46 +90,46 @@
         "matrix-size": 384,
         "runtime": [
             {
-                "average": 0.2533126,
+                "average": 0.23046065,
                 "block": 16,
                 "repeat": 20,
-                "total": 5.066252
+                "total": 4.609213
             },
             {
-                "average": 0.2447651,
+                "average": 0.22588919999999998,
                 "block": 24,
                 "repeat": 20,
-                "total": 4.895302
+                "total": 4.517784
             },
             {
-                "average": 0.2446915,
+                "average": 0.22733645,
                 "block": 32,
                 "repeat": 20,
-                "total": 4.89383
+                "total": 4.546729
             },
             {
-                "average": 0.2641849,
+                "average": 0.22112530000000002,
                 "block": 48,
                 "repeat": 20,
-                "total": 5.283698
+                "total": 4.422506
             },
             {
-                "average": 0.251663,
+                "average": 0.2319337,
                 "block": 64,
                 "repeat": 20,
-                "total": 5.03326
+                "total": 4.638674
             },
             {
-                "average": 0.248842,
+                "average": 0.2280345,
                 "block": 96,
                 "repeat": 20,
-                "total": 4.97684
+                "total": 4.56069
             },
             {
-                "average": 0.25057615,
+                "average": 0.22870154999999998,
                 "block": 128,
                 "repeat": 20,
-                "total": 5.011523
+                "total": 4.574031
             }
         ],
         "variant": "block"
@@ -139,22 +139,22 @@
         "matrix-size": 96,
         "runtime": [
             {
-                "average": 0.006550749999999999,
+                "average": 0.0044878,
                 "block": 16,
                 "repeat": 20,
-                "total": 0.131015
+                "total": 0.089756
             },
             {
-                "average": 0.00807435,
+                "average": 0.0059657,
                 "block": 24,
                 "repeat": 20,
-                "total": 0.161487
+                "total": 0.119314
             },
             {
-                "average": 0.00633225,
+                "average": 0.0051985,
                 "block": 32,
                 "repeat": 20,
-                "total": 0.126645
+                "total": 0.10397
             }
         ],
         "variant": "block"
@@ -164,58 +164,58 @@
         "matrix-size": 768,
         "runtime": [
             {
-                "average": 2.23536815,
+                "average": 1.86664225,
                 "block": 16,
                 "repeat": 20,
-                "total": 44.707363
+                "total": 37.332845
             },
             {
-                "average": 2.0271695000000003,
+                "average": 1.8720311500000002,
                 "block": 24,
                 "repeat": 20,
-                "total": 40.54339
+                "total": 37.440623
             },
             {
-                "average": 2.0774091500000003,
+                "average": 1.8745508000000002,
                 "block": 32,
                 "repeat": 20,
-                "total": 41.548183
+                "total": 37.491016
             },
             {
-                "average": 2.01346335,
+                "average": 1.79419635,
                 "block": 48,
                 "repeat": 20,
-                "total": 40.269267
+                "total": 35.883927
             },
             {
-                "average": 2.0204342,
+                "average": 1.85347075,
                 "block": 64,
                 "repeat": 20,
-                "total": 40.408684
+                "total": 37.069415
             },
             {
-                "average": 1.9624807499999999,
+                "average": 1.7775963000000001,
                 "block": 96,
                 "repeat": 20,
-                "total": 39.249615
+                "total": 35.551926
             },
             {
-                "average": 1.9754912999999998,
+                "average": 1.7788080000000002,
                 "block": 128,
                 "repeat": 20,
-                "total": 39.509826
+                "total": 35.57616
             },
             {
-                "average": 1.98029035,
+                "average": 1.7879165499999998,
                 "block": 192,
                 "repeat": 20,
-                "total": 39.605807
+                "total": 35.758331
             },
             {
-                "average": 1.97463765,
+                "average": 1.7818154,
                 "block": 256,
                 "repeat": 20,
-                "total": 39.492753
+                "total": 35.636308
             }
         ],
         "variant": "block"
@@ -225,22 +225,22 @@
         "matrix-size": 96,
         "runtime": [
             {
-                "average": 0.00674285,
+                "average": 0.0044898,
                 "block": 16,
                 "repeat": 20,
-                "total": 0.134857
+                "total": 0.089796
             },
             {
-                "average": 0.0068214999999999994,
+                "average": 0.00461825,
                 "block": 24,
                 "repeat": 20,
-                "total": 0.13643
+                "total": 0.092365
             },
             {
-                "average": 0.006548900000000001,
+                "average": 0.005288650000000001,
                 "block": 32,
                 "repeat": 20,
-                "total": 0.130978
+                "total": 0.105773
             }
         ],
         "variant": "block"

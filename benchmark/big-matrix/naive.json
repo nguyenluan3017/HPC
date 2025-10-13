@@ -1,0 +1,62 @@
+[
+    {
+        "cache": "l1d_cache",
+        "matrix-size": 576,
+        "runtime": {
+            "average": 1.0078754,
+            "repeat": 5,
+            "total": 5.039377
+        },
+        "variant": "naive"
+    },
+    {
+        "cache": "l1i_cache",
+        "matrix-size": 576,
+        "runtime": {
+            "average": 1.0637,
+            "repeat": 5,
+            "total": 5.3185
+        },
+        "variant": "naive"
+    },
+    {
+        "cache": "l2_unified_cache",
+        "matrix-size": 1152,
+        "runtime": {
+            "average": 9.1381312,
+            "repeat": 5,
+            "total": 45.690656
+        },
+        "variant": "naive"
+    },
+    {
+        "cache": "l1_data_cache",
+        "matrix-size": 288,
+        "runtime": {
+            "average": 0.1184058,
+            "repeat": 5,
+            "total": 0.592029
+        },
+        "variant": "naive"
+    },
+    {
+        "cache": "l3_unified_cache",
+        "matrix-size": 2304,
+        "runtime": {
+            "average": 91.9987614,
+            "repeat": 5,
+            "total": 459.993807
+        },
+        "variant": "naive"
+    },
+    {
+        "cache": "l1_instruction_cache",
+        "matrix-size": 288,
+        "runtime": {
+            "average": 0.1276702,
+            "repeat": 5,
+            "total": 0.638351
+        },
+        "variant": "naive"
+    }
+]
