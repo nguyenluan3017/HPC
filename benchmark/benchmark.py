@@ -247,7 +247,7 @@ def print_system_info():
 
     return info
 
-def get_optimal_block_sizes(cache_info):
+def get_maximum_block_sizes(cache_info):
     """
     Suggest optimal block sizes based on cache information
 
@@ -257,45 +257,22 @@ def get_optimal_block_sizes(cache_info):
     Returns:
         list: Suggested block sizes for matrix multiplication
     """
-    block_sizes = {}
-
-    try:
-        for lv, sz_text in cache_info.items():
-            if sz_text:
-                # Parse cache size (handle KB, MB)
-                size_match = re.search(r'(\d+)\s*(KB|MB|K)', sz_text.upper())
-                size = 0
-                if size_match:
-                    size_val = int(size_match.group(1))
-                    unit = size_match.group(2)
-                    if unit == 'MB':
-                        size = size_val * 1024  # Convert to KB
-                    else:
-                        size = size_val
-
-            if size > 0:
-                # Calculate block size that fits in L1 cache
-                # For matrix multiplication, we need 3 blocks: A, B, C
-                # Each block is block_size^2 * sizeof(double) = block_size^2 * 8 bytes
-                # Total memory = 3 * block_size^2 * 8 bytes
-                # We want this to fit in L1 cache (in KB)
-
-                max_block_size_squared = (size * 1024) // (3 * 8)  # Convert KB to bytes, divide by 24
-                max_block_size = int(max_block_size_squared ** 0.5)
-
-                # Generate reasonable block sizes
-                suggested_sizes = []
-                for size in [16, 24, 32, 48, 64, 96, 128, 192, 256]:
-                    if size <= max_block_size:
-                        suggested_sizes.append(size)
-
-                if suggested_sizes:
-                    block_sizes[lv] = suggested_sizes
-
-    except Exception as e:
-        print(f"Error calculating optimal block sizes: {e}")
-
-    return block_sizes
+    block_sizes = set()
+    for _, sz_text in cache_info.items():
+        size_match = re.search(r'(\d+)\s*(\S+)', sz_text.upper())
+        size = 0
+        if size_match:
+            size_val = int(size_match.group(1))
+            unit = size_match.group(2)
+            if unit.startswith("M"):
+                size = size_val * 1024
+            else:
+                size = size_val
+        if size > 0:
+            max_block_size_squared = (size * 1024) // (3 * 8)  # Convert KB to bytes, divide by 24
+            max_block_size = int(max_block_size_squared ** 0.5)
+            block_sizes.add(max_block_size)
+    return sorted(list(block_sizes))
 
 def gcd(*numbers):
     if not numbers:
@@ -328,10 +305,6 @@ def lcm(*numbers):
     return result
 
 def output_result(result, output_dir, variant):
-    if not output_dir:
-        print("No output directory specified")
-        return
-
     os.makedirs(output_dir, exist_ok=True)
 
     filename = f"{variant}.json"
@@ -345,9 +318,11 @@ def output_result(result, output_dir, variant):
 
 def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
     results = []
+    min_matrix_size = 1000
+    max_matrix_size = 4000
     cache_blocking = 'block' in variant
 
-    def run_mmult(blk_size = None):
+    def run_mmult(matrix_size, blk_size = None):
         command = [
             exec_name,
             "--variant", variant,
@@ -383,34 +358,24 @@ def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
         else:
             print(f"❌ Execution error: {output.stderr}")
 
-    for cache_lv, sizes in block_sizes.items():
-        matrix_size = lcm(*sizes)
-        result = {
-            "cache": cache_lv,
+    for matrix_size in range(min_matrix_size, max_matrix_size, 500):
+        print(f"\n{10 * '*'} MATRIX SIZE: {matrix_size} {10 * '*'}")
+        results.append({
             "matrix-size": matrix_size,
             "variant": variant,
-        }
-
-        print(f"\n{10 * '*'} {cache_lv} [ matrix size: {matrix_size} ] {10 * '*'}")
-
-        if cache_blocking:
-            result["runtime"] = [run_mmult(blk_size) for blk_size in sizes]
-        else:
-            result["runtime"] = run_mmult()
-
-        results.append(result)
-
+            "runtime": [run_mmult(matrix_size, block_size) for block_size in block_sizes] if cache_blocking else run_mmult(matrix_size)
+        })
     output_result(results, output_dir, variant)
-    
+
 def build_mmult():
     os_name_short = platform.system().lower()
     exec_path = os.path.join(os.getcwd(), "bin", f"mmult.{os_name_short}")
 
-    print(f"Attempting to build with build-mmult.sh...")
+    print("Attempting to build with build-mmult.sh...")
     build_script = os.path.join(os.getcwd(), "build-mmult.sh")
     if not os.path.exists(build_script):
         print(f"Build script not found: {build_script}")
-        return 1
+        return False
 
     # Make sure the build script is executable
     try:
@@ -422,16 +387,16 @@ def build_mmult():
         build_result = run_command([build_script], shell=True)
 
     if not build_result or build_result.returncode != 0:
-        print("Failed to build mmult binary.")
+        print("Failed to build mmult binary: ", build_result.stderr)
         if build_result:
             print(build_result.stdout or "")
             print(build_result.stderr or "")
-        return 1
+        return False
 
     # Verify the binary exists after build
     if not os.path.exists(exec_path):
         print(f"Build finished but mmult binary still missing at {exec_path}")
-        return 1
+        return False
 
     print(f"Build successful: {exec_path} found.")
     return exec_path
@@ -443,28 +408,29 @@ def main():
 
     print("Matrix Multiplication Benchmark - All Variants")
     print("=" * 60)
-    
+
     # Ensure build directory exists and the mmult binary is present; build if missing.
     exec_name = build_mmult()
+    if not exec_name:
+        return -1
 
     # Get and print system information
     sys_info = print_system_info()
-    variants = [('naive', 10), ('block', 20), ('blas-block', 30), ('blas', 40)]
+    variants = [('blas', 50), ('blas-block', 50), ('block', 25), ('naive', 5)]
 
     # Suggest optimal block sizes
-    print(f"\n=== Optimization Suggestions ===")
-    block_sizes = get_optimal_block_sizes(sys_info['cache'])
-    print(f"Suggested block sizes for matrix multiplication:")
-    for cache_lv, block_size in block_sizes.items():
-        print(f"{cache_lv}: {block_size}")
+    print("\n=== Block Size Suggestions ===")
+    max_block_size = max(get_maximum_block_sizes(sys_info['cache']))
+    block_sizes = [i for i in range(100, max_block_size, 100)]
+    print(block_sizes)
 
     for variant, repeat in variants:
         print(f"\n=== Running Benchmarks for {variant} (repeat={repeat}) ===")
         run_benchmark_variant(variant, repeat, exec_name, block_sizes, args.output_dir)
 
-    print(f"\n🎉 All benchmarks completed!")
+    print("\n🎉 All benchmarks completed!")
     print(f"📁 Results saved to: {args.output_dir}/")
-    print(f"📄 Files created:")
+    print("📄 Files created:")
     for variant, _ in variants:
         output_file = os.path.join(args.output_dir, f"{variant}.json")
         if os.path.exists(output_file):

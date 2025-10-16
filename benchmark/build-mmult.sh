@@ -17,7 +17,7 @@ case "$(uname)" in
             -L/usr/local/lib \
             -o bin/mmult.linux \
             mmult.c \
-            -lcblas
+            -lopenblas
         ;;
     *)
         echo "Unsupported system: '$SYS'"
