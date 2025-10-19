@@ -425,17 +425,13 @@ def main():
 
     # Get and print system information
     sys_info = print_system_info()
-    variants = [('blas', 50), ('blas-block', 50), ('block', 25), ('naive', 5)]
+    variants = [('blas-block', 50), ('block', 25), ('naive', 5)]
 
     # Suggest optimal block sizes
     print("\n=== Test Scenarios ===")
     max_block_size = max(get_maximum_block_sizes(sys_info['cache']))
     test_scenarios = {
-        matrix_size: [
-            block_size 
-                for block_size in divisors(matrix_size) 
-                    if block_size <= max_block_size
-        ] for matrix_size in range(1024, 4097, 512)
+        matrix_size: sorted([16, 128, 256, 512]) for matrix_size in range(1024, 4097, 512)
     }
 
     print(f"📊 Maximum recommended block size: {max_block_size}")

@@ -1,0 +1,212 @@
+[
+    {
+        "matrix-size": 1024,
+        "runtime": [
+            {
+                "average": 0.18550605999999997,
+                "block": 16,
+                "repeat": 50,
+                "total": 9.275303
+            },
+            {
+                "average": 0.03275948,
+                "block": 128,
+                "repeat": 50,
+                "total": 1.637974
+            },
+            {
+                "average": 0.03361554,
+                "block": 256,
+                "repeat": 50,
+                "total": 1.680777
+            },
+            {
+                "average": 0.01798578,
+                "block": 512,
+                "repeat": 50,
+                "total": 0.899289
+            }
+        ],
+        "variant": "blas-block"
+    },
+    {
+        "matrix-size": 1536,
+        "runtime": [
+            {
+                "average": 0.7171341,
+                "block": 16,
+                "repeat": 50,
+                "total": 35.856705
+            },
+            {
+                "average": 0.0975896,
+                "block": 128,
+                "repeat": 50,
+                "total": 4.87948
+            },
+            {
+                "average": 0.07029352,
+                "block": 256,
+                "repeat": 50,
+                "total": 3.514676
+            },
+            {
+                "average": 0.06610992,
+                "block": 512,
+                "repeat": 50,
+                "total": 3.305496
+            }
+        ],
+        "variant": "blas-block"
+    },
+    {
+        "matrix-size": 2048,
+        "runtime": [
+            {
+                "average": 1.99124842,
+                "block": 16,
+                "repeat": 50,
+                "total": 99.562421
+            },
+            {
+                "average": 0.2505133,
+                "block": 128,
+                "repeat": 50,
+                "total": 12.525665
+            },
+            {
+                "average": 0.22242504,
+                "block": 256,
+                "repeat": 50,
+                "total": 11.121252
+            },
+            {
+                "average": 0.12648308,
+                "block": 512,
+                "repeat": 50,
+                "total": 6.324154
+            }
+        ],
+        "variant": "blas-block"
+    },
+    {
+        "matrix-size": 2560,
+        "runtime": [
+            {
+                "average": 3.5709679199999997,
+                "block": 16,
+                "repeat": 50,
+                "total": 178.548396
+            },
+            {
+                "average": 0.48185136,
+                "block": 128,
+                "repeat": 50,
+                "total": 24.092568
+            },
+            {
+                "average": 0.48225352,
+                "block": 256,
+                "repeat": 50,
+                "total": 24.112676
+            },
+            {
+                "average": 0.19375679999999998,
+                "block": 512,
+                "repeat": 50,
+                "total": 9.68784
+            }
+        ],
+        "variant": "blas-block"
+    },
+    {
+        "matrix-size": 3072,
+        "runtime": [
+            {
+                "average": 6.560345760000001,
+                "block": 16,
+                "repeat": 50,
+                "total": 328.017288
+            },
+            {
+                "average": 0.81332398,
+                "block": 128,
+                "repeat": 50,
+                "total": 40.666199
+            },
+            {
+                "average": 0.7790379799999999,
+                "block": 256,
+                "repeat": 50,
+                "total": 38.951899
+            },
+            {
+                "average": 0.34034574,
+                "block": 512,
+                "repeat": 50,
+                "total": 17.017287
+            }
+        ],
+        "variant": "blas-block"
+    },
+    {
+        "matrix-size": 3584,
+        "runtime": [
+            {
+                "average": 10.14393692,
+                "block": 16,
+                "repeat": 50,
+                "total": 507.196846
+            },
+            {
+                "average": 1.3111895000000002,
+                "block": 128,
+                "repeat": 50,
+                "total": 65.559475
+            },
+            {
+                "average": 1.39800278,
+                "block": 256,
+                "repeat": 50,
+                "total": 69.900139
+            },
+            {
+                "average": 0.7257147399999999,
+                "block": 512,
+                "repeat": 50,
+                "total": 36.285737
+            }
+        ],
+        "variant": "blas-block"
+    },
+    {
+        "matrix-size": 4096,
+        "runtime": [
+            {
+                "average": 17.430891420000002,
+                "block": 16,
+                "repeat": 50,
+                "total": 871.544571
+            },
+            {
+                "average": 2.56241284,
+                "block": 128,
+                "repeat": 50,
+                "total": 128.120642
+            },
+            {
+                "average": 1.88413398,
+                "block": 256,
+                "repeat": 50,
+                "total": 94.206699
+            },
+            {
+                "average": 1.23172522,
+                "block": 512,
+                "repeat": 50,
+                "total": 61.586261
+            }
+        ],
+        "variant": "blas-block"
+    }
+]

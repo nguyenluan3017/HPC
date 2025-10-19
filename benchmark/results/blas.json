@@ -1,0 +1,65 @@
+[
+    {
+        "matrix-size": 1024,
+        "runtime": {
+            "average": 0.01663364,
+            "repeat": 50,
+            "total": 0.831682
+        },
+        "variant": "blas"
+    },
+    {
+        "matrix-size": 1536,
+        "runtime": {
+            "average": 0.03590344,
+            "repeat": 50,
+            "total": 1.795172
+        },
+        "variant": "blas"
+    },
+    {
+        "matrix-size": 2048,
+        "runtime": {
+            "average": 0.07143196,
+            "repeat": 50,
+            "total": 3.571598
+        },
+        "variant": "blas"
+    },
+    {
+        "matrix-size": 2560,
+        "runtime": {
+            "average": 0.14034798,
+            "repeat": 50,
+            "total": 7.017399
+        },
+        "variant": "blas"
+    },
+    {
+        "matrix-size": 3072,
+        "runtime": {
+            "average": 0.21894122,
+            "repeat": 50,
+            "total": 10.947061
+        },
+        "variant": "blas"
+    },
+    {
+        "matrix-size": 3584,
+        "runtime": {
+            "average": 0.3676712,
+            "repeat": 50,
+            "total": 18.38356
+        },
+        "variant": "blas"
+    },
+    {
+        "matrix-size": 4096,
+        "runtime": {
+            "average": 0.51984012,
+            "repeat": 50,
+            "total": 25.992006
+        },
+        "variant": "blas"
+    }
+]
