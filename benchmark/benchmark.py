@@ -7,8 +7,10 @@ import re
 import argparse
 import json
 from contextlib import contextmanager
+import math
 import threading
 import time
+import pprint
 
 @contextmanager
 def spinner(message, chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"):
@@ -304,6 +306,12 @@ def lcm(*numbers):
         result = lcm(result, abs(num))
     return result
 
+def divisors(number):
+    limit = int(math.sqrt(number))
+    div = [d for d in range(2, limit) if number % d == 0]
+    ans = div + [number // d for d in div if number // d != d]
+    return list(sorted(ans))
+
 def output_result(result, output_dir, variant):
     os.makedirs(output_dir, exist_ok=True)
 
@@ -316,13 +324,11 @@ def output_result(result, output_dir, variant):
 
     print(f"\n=== Results written to {output_file} ===")
 
-def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
+def run_benchmark_variant(variant, repeat, exec_name, test_scenarios, output_dir):
     results = []
-    min_matrix_size = 1000
-    max_matrix_size = 4000
     cache_blocking = 'block' in variant
 
-    def run_mmult(matrix_size, blk_size = None):
+    def run_mmult(matrix_size, block_size = None):
         command = [
             exec_name,
             "--variant", variant,
@@ -330,8 +336,8 @@ def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
             "--repeat", str(repeat),
         ]
 
-        if blk_size:
-            command.extend(["--block", str(blk_size)])
+        if block_size:
+            command.extend(["--block", str(block_size)])
 
         spinner_msg = f"Running: {' '.join(command)}"
         with spinner(spinner_msg):
@@ -348,22 +354,25 @@ def run_benchmark_variant(variant, repeat, exec_name, block_sizes, output_dir):
                     "repeat": repeat,
                 }
                 if cache_blocking:
-                    run['block'] = blk_size
+                    run['block'] = block_size
 
             if cache_blocking:
-                print(f"✅ Total runtime for block size {blk_size}: {runtime_val:.6f}s")
+                print(f"✅ Total runtime for block size {block_size}: {runtime_val:.6f}s")
             else:
                 print(f"✅ Total runtime: {runtime_val:.6f}s")
             return run
         else:
             print(f"❌ Execution error: {output.stderr}")
 
-    for matrix_size in range(min_matrix_size, max_matrix_size, 500):
+    for matrix_size, block_sizes in test_scenarios.items():
         print(f"\n{10 * '*'} MATRIX SIZE: {matrix_size} {10 * '*'}")
         results.append({
             "matrix-size": matrix_size,
             "variant": variant,
-            "runtime": [run_mmult(matrix_size, block_size) for block_size in block_sizes] if cache_blocking else run_mmult(matrix_size)
+            "runtime": [
+                run_mmult(matrix_size, block_size) 
+                    for block_size in block_sizes
+            ] if cache_blocking else run_mmult(matrix_size)
         })
     output_result(results, output_dir, variant)
 
@@ -419,14 +428,43 @@ def main():
     variants = [('blas', 50), ('blas-block', 50), ('block', 25), ('naive', 5)]
 
     # Suggest optimal block sizes
-    print("\n=== Block Size Suggestions ===")
+    print("\n=== Test Scenarios ===")
     max_block_size = max(get_maximum_block_sizes(sys_info['cache']))
-    block_sizes = [i for i in range(100, max_block_size, 100)]
-    print(block_sizes)
+    test_scenarios = {
+        matrix_size: [
+            block_size 
+                for block_size in divisors(matrix_size) 
+                    if block_size <= max_block_size
+        ] for matrix_size in range(1024, 4097, 512)
+    }
 
+    print(f"📊 Maximum recommended block size: {max_block_size}")
+    print()
+
+    print("┌" + "─" * 15 + "┬" + "─" * 8 + "┬" + "─" * 50 + "┐")
+    print("│ Matrix Size   │ Count  │ Block Sizes" + " " * 38 + "│")
+    print("├" + "─" * 15 + "┼" + "─" * 8 + "┼" + "─" * 50 + "┤")
+
+    for matrix_size, block_sizes in test_scenarios.items():
+        size_str = f"{matrix_size:,} x {matrix_size:,}"
+        count_str = f"{len(block_sizes)}"
+        
+        # Format first line of block sizes
+        if block_sizes:
+            blocks_str = ", ".join(str(b) for b in block_sizes[:6])
+            if len(block_sizes) > 6:
+                blocks_str += f", ... (+{len(block_sizes) - 6} more)"
+        else:
+            blocks_str = "None available"
+        
+        print(f"│ {size_str:<13} │ {count_str:>6} │ {blocks_str:<48} │")
+
+    print("└" + "─" * 15 + "┴" + "─" * 8 + "┴" + "─" * 50 + "┘")
+    print()    
+        
     for variant, repeat in variants:
         print(f"\n=== Running Benchmarks for {variant} (repeat={repeat}) ===")
-        run_benchmark_variant(variant, repeat, exec_name, block_sizes, args.output_dir)
+        run_benchmark_variant(variant, repeat, exec_name, test_scenarios, args.output_dir)
 
     print("\n🎉 All benchmarks completed!")
     print(f"📁 Results saved to: {args.output_dir}/")
