@@ -73,8 +73,8 @@ for (int bi = 0; bi < N; bi += block_size)
 1. Spatial locality: The block is sufficient small, so access to consecutive elements in array `A` is predicted by the CPU for cache optimization.
 
 2. Temperal locality: 
-- Variable `sum` is stored in CPU register for fast access. 
-- Elements from `A[i * N]` to `A[i * N + k]` are reused $blockSize^2$ times within `j` loop.
+    - Variable `sum` is stored in CPU register for fast access. 
+    - Elements from `A[i * N]` to `A[i * N + k]` are reused $blockSize^2$ times within `j` loop.
 
 ### Multiplication of matrix blocks using cblas_dgemm in ijk implementation
 
@@ -137,6 +137,8 @@ cblas_dgemm(
 ```
 ## Experimental Results
 
+### Environment Specification
+
 The experiment runs on a *Ubuntu Linux* computer of which specifications are:
 
 | Component | Specification |
@@ -150,6 +152,8 @@ The experiment runs on a *Ubuntu Linux* computer of which specifications are:
 | L2 Cache | 4 MiB |
 | L3 Cache | 32 MiB |
 
+### Estimation
+
 We first calculate the maximum block size fitting CPU cache. Let $H$ be the maximum block size, we have:
 - One block from matrix A: $H^2$ elements 
 - One block from matrix B: $H^2$ elements
@@ -160,6 +164,39 @@ In total, there are $3 * H^2$ elements of 64-bit floating point. Thus, CPU cache
 $$3 * H^2 * 8 \le \text{CPU cache size}$$
 $$\iff H \le \sqrt{\frac{\text{CPU cache size}}{3 * 8}}$$
 
-In our program, we only implement one layer cache (check `matrix_mult_block` and `matrix_mult_cblas_block` implementations). Hence, we only take into account the largest L3 Cache. Alternating L3 Cache size of 32 MiB = 33,554,432 bytes to the formula, we obtain $H \le 1182.41335$ bytes. This is the block size's upper bound in the benchmark. Secondly, for the ease of estimation, we choose matrix sizes which are multiples of 512. All matrix sizes we run our tests: 1024, 1536, 2048, 2560, 3072, 3584, and 4096. Lastly, block size must divide all matrix sizes, 
+In our program, we only implement one layer cache (check `matrix_mult_block` and `matrix_mult_cblas_block` implementations). Hence, we only take into account the largest L3 Cache. Alternating L3 Cache size of 32 MiB = 33,554,432 bytes to the formula, we obtain $H \le 1182.41335$ bytes. This is the block size's upper bound in the benchmark. 
 
+Secondly, for the ease of estimation, we choose matrix sizes which are multiples of 512. All matrix sizes we run our tests: 1024, 1536, 2048, 2560, 3072, 3584, and 4096. Lastly, for blocking implementations, the chosen block sizes must be common divisors of all matrix sizes. 
 
+### Test Scenarios
+
+Basing on the estimation, we provide the summary table for all test scenarios:
+
+| Implementation | Matrix Size | Block Size | 
+|---|---|---|
+| Naive | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | |
+| Block | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | 16, 128, 256, 512, 1024 |
+| CBlas | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | |
+| CBlas + Block | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | 16, 128, 256, 512, 1024 |
+
+### Benchmark Results
+
+#### Naive and Block Implementation Comparison
+
+First we look at two blocking implementations: `matrix_mult_block` versus `matrix_mult_naive`:
+
+| Matrix Size | Naive (seconds) | Best Block Block Size | Best Block Time (seconds) | Speedup (Naive/Block) |
+|-------------|-----------------|-------------------------|---------------------|-------------------------------|
+| 1024 | 9.343332 | 128 | 3.638008 | 2.57x |
+| 1536 | 27.428002 | 256 | 12.745546 | 2.15x |
+| 2048 | 69.980651 | 256 | 30.772002 | 2.27x |
+| 2560 | 140.638135 | 1024 | 60.225147 | 2.34x |
+| 3072 | 255.616116 | 256 | 107.104698 | 2.39x |
+| 3584 | 434.211685 | 1024 | 168.255812 | 2.58x |
+| 4096 | 621.830439 | 128 | 232.936458 | 2.67x |
+
+![Naive versus Block Implemenation](img/naive_versus_block.png "")
+
+Key Observations:
+
+-  
