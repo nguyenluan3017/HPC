@@ -131,6 +131,9 @@ def main():
 
     print(generate_blocking_vs_nonblocking_table(block_data, naive_data, nonblocking_name="Naive", blocking_name="Block"))
     plot_blocking_vs_nonblocking_comparison(block_data, naive_data, blocking_name="Block", nonblocking_name="Naive", save_name="naive_versus_block.png")
+    
+    print(generate_blocking_vs_nonblocking_table(blas_block_data, blas_data, nonblocking_name="Cblas", blocking_name="Cblas-block"))
+    plot_blocking_vs_nonblocking_comparison(blas_block_data, blas_data, blocking_name="Cblas", nonblocking_name="Cblas-block", save_name="cblas_versus_cblas-block.png")
 
 if __name__ == "__main__":
     main()

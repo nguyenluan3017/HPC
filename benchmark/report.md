@@ -179,7 +179,7 @@ Basing on the estimation, we provide the summary table for all test scenarios:
 | CBlas | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | |
 | CBlas + Block | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | 16, 128, 256, 512, 1024 |
 
-### Benchmark Results
+### Benchmark Results and Analysis
 
 #### Naive and Block Implementation Comparison
 
@@ -202,6 +202,22 @@ Also, we
 Key Observations:
 
 - Loop tiling technique brings about more than two time (e.g., ~2.2 to 2.7 times) faster calculation time. The implementation deliberately omits advanced optimization such as multi-threading, kij loop ordering, SIMD, iteration unrolling, etc. This means the significant results is because of the increment in cache hit rate.
-- 
+
+
+#### Cblas and Cblas-block Implementation Comparison
+
+Let's look at the runtime results for 
+
+| Matrix Size | Cblas (seconds) | Best Cblas-block Block Size | Best Cblas-block Time (seconds) | Speedup (Cblas/Cblas-block) |
+|-------------|-----------------|-------------------------|---------------------|-------------------------------|
+| 1024 | 0.016634 | 1024 | 0.015478 | 1.07x |
+| 1536 | 0.035903 | 1024 | 0.059824 | 0.60x |
+| 2048 | 0.071432 | 1024 | 0.095189 | 0.75x |
+| 2560 | 0.140348 | 512 | 0.193757 | 0.72x |
+| 3072 | 0.218941 | 1024 | 0.295758 | 0.74x |
+| 3584 | 0.367671 | 1024 | 0.525116 | 0.70x |
+| 4096 | 0.519840 | 1024 | 0.800810 | 0.65x |
+
+![Cblas and Cblas-block Implementation](img/cblas_versus_cblas-block.png)
 
 ## References
