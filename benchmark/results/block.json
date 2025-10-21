@@ -1,0 +1,212 @@
+[
+    {
+        "matrix-size": 1024,
+        "runtime": [
+            {
+                "average": 3.82497032,
+                "block": 16,
+                "repeat": 25,
+                "total": 95.624258
+            },
+            {
+                "average": 3.6380076000000003,
+                "block": 128,
+                "repeat": 25,
+                "total": 90.95019
+            },
+            {
+                "average": 3.72602648,
+                "block": 256,
+                "repeat": 25,
+                "total": 93.150662
+            },
+            {
+                "average": 4.10580688,
+                "block": 512,
+                "repeat": 25,
+                "total": 102.645172
+            }
+        ],
+        "variant": "block"
+    },
+    {
+        "matrix-size": 1536,
+        "runtime": [
+            {
+                "average": 14.36200284,
+                "block": 16,
+                "repeat": 25,
+                "total": 359.050071
+            },
+            {
+                "average": 13.0436746,
+                "block": 128,
+                "repeat": 25,
+                "total": 326.091865
+            },
+            {
+                "average": 12.74554632,
+                "block": 256,
+                "repeat": 25,
+                "total": 318.638658
+            },
+            {
+                "average": 12.99339008,
+                "block": 512,
+                "repeat": 25,
+                "total": 324.834752
+            }
+        ],
+        "variant": "block"
+    },
+    {
+        "matrix-size": 2048,
+        "runtime": [
+            {
+                "average": 34.17937152,
+                "block": 16,
+                "repeat": 25,
+                "total": 854.484288
+            },
+            {
+                "average": 31.020021,
+                "block": 128,
+                "repeat": 25,
+                "total": 775.500525
+            },
+            {
+                "average": 30.772001799999998,
+                "block": 256,
+                "repeat": 25,
+                "total": 769.300045
+            },
+            {
+                "average": 35.18748112,
+                "block": 512,
+                "repeat": 25,
+                "total": 879.687028
+            }
+        ],
+        "variant": "block"
+    },
+    {
+        "matrix-size": 2560,
+        "runtime": [
+            {
+                "average": 65.84785063999999,
+                "block": 16,
+                "repeat": 25,
+                "total": 1646.196266
+            },
+            {
+                "average": 62.576931480000006,
+                "block": 128,
+                "repeat": 25,
+                "total": 1564.423287
+            },
+            {
+                "average": 61.039242560000005,
+                "block": 256,
+                "repeat": 25,
+                "total": 1525.981064
+            },
+            {
+                "average": 61.7295946,
+                "block": 512,
+                "repeat": 25,
+                "total": 1543.239865
+            }
+        ],
+        "variant": "block"
+    },
+    {
+        "matrix-size": 3072,
+        "runtime": [
+            {
+                "average": 121.4206552,
+                "block": 16,
+                "repeat": 25,
+                "total": 3035.51638
+            },
+            {
+                "average": 110.22535664000002,
+                "block": 128,
+                "repeat": 25,
+                "total": 2755.633916
+            },
+            {
+                "average": 107.10469812,
+                "block": 256,
+                "repeat": 25,
+                "total": 2677.617453
+            },
+            {
+                "average": 107.45268812,
+                "block": 512,
+                "repeat": 25,
+                "total": 2686.317203
+            }
+        ],
+        "variant": "block"
+    },
+    {
+        "matrix-size": 3584,
+        "runtime": [
+            {
+                "average": 193.78786380000003,
+                "block": 16,
+                "repeat": 25,
+                "total": 4844.696595
+            },
+            {
+                "average": 176.84719824,
+                "block": 128,
+                "repeat": 25,
+                "total": 4421.179956
+            },
+            {
+                "average": 172.61111332000002,
+                "block": 256,
+                "repeat": 25,
+                "total": 4315.277833
+            },
+            {
+                "average": 173.32247316000002,
+                "block": 512,
+                "repeat": 25,
+                "total": 4333.061829
+            }
+        ],
+        "variant": "block"
+    },
+    {
+        "matrix-size": 4096,
+        "runtime": [
+            {
+                "average": 280.11202412,
+                "block": 16,
+                "repeat": 25,
+                "total": 7002.800603
+            },
+            {
+                "average": 232.93645831999999,
+                "block": 128,
+                "repeat": 25,
+                "total": 5823.411458
+            },
+            {
+                "average": 254.6336322,
+                "block": 256,
+                "repeat": 25,
+                "total": 6365.840805
+            },
+            {
+                "average": 399.54153612000005,
+                "block": 512,
+                "repeat": 25,
+                "total": 9988.538403
+            }
+        ],
+        "variant": "block"
+    }
+]
