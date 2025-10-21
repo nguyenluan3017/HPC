@@ -25,6 +25,12 @@
                 "block": 512,
                 "repeat": 50,
                 "total": 0.899289
+            },
+            {
+                "average": 0.01547848,
+                "block": 1024,
+                "repeat": 50,
+                "total": 0.773924
             }
         ],
         "variant": "blas-block"
@@ -55,6 +61,12 @@
                 "block": 512,
                 "repeat": 50,
                 "total": 3.305496
+            },
+            {
+                "average": 0.05982374,
+                "block": 1024,
+                "repeat": 50,
+                "total": 2.991187
             }
         ],
         "variant": "blas-block"
@@ -85,6 +97,12 @@
                 "block": 512,
                 "repeat": 50,
                 "total": 6.324154
+            },
+            {
+                "average": 0.09518879999999999,
+                "block": 1024,
+                "repeat": 50,
+                "total": 4.75944
             }
         ],
         "variant": "blas-block"
@@ -115,6 +133,12 @@
                 "block": 512,
                 "repeat": 50,
                 "total": 9.68784
+            },
+            {
+                "average": 0.24531113999999998,
+                "block": 1024,
+                "repeat": 50,
+                "total": 12.265557
             }
         ],
         "variant": "blas-block"
@@ -145,6 +169,12 @@
                 "block": 512,
                 "repeat": 50,
                 "total": 17.017287
+            },
+            {
+                "average": 0.2957575,
+                "block": 1024,
+                "repeat": 50,
+                "total": 14.787875
             }
         ],
         "variant": "blas-block"
@@ -175,6 +205,12 @@
                 "block": 512,
                 "repeat": 50,
                 "total": 36.285737
+            },
+            {
+                "average": 0.5251163799999999,
+                "block": 1024,
+                "repeat": 50,
+                "total": 26.255819
             }
         ],
         "variant": "blas-block"
@@ -205,6 +241,12 @@
                 "block": 512,
                 "repeat": 50,
                 "total": 61.586261
+            },
+            {
+                "average": 0.80080956,
+                "block": 1024,
+                "repeat": 50,
+                "total": 40.040478
             }
         ],
         "variant": "blas-block"
