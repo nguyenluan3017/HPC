@@ -25,6 +25,12 @@
                 "block": 512,
                 "repeat": 25,
                 "total": 102.645172
+            },
+            {
+                "average": 6.02276764,
+                "block": 1024,
+                "repeat": 25,
+                "total": 150.569191
             }
         ],
         "variant": "block"
@@ -55,6 +61,12 @@
                 "block": 512,
                 "repeat": 25,
                 "total": 324.834752
+            },
+            {
+                "average": 12.92569292,
+                "block": 1024,
+                "repeat": 25,
+                "total": 323.142323
             }
         ],
         "variant": "block"
@@ -85,6 +97,12 @@
                 "block": 512,
                 "repeat": 25,
                 "total": 879.687028
+            },
+            {
+                "average": 47.714754199999994,
+                "block": 1024,
+                "repeat": 25,
+                "total": 1192.868855
             }
         ],
         "variant": "block"
@@ -115,6 +133,12 @@
                 "block": 512,
                 "repeat": 25,
                 "total": 1543.239865
+            },
+            {
+                "average": 60.225146519999996,
+                "block": 1024,
+                "repeat": 25,
+                "total": 1505.628663
             }
         ],
         "variant": "block"
@@ -145,6 +169,12 @@
                 "block": 512,
                 "repeat": 25,
                 "total": 2686.317203
+            },
+            {
+                "average": 157.78062672,
+                "block": 1024,
+                "repeat": 25,
+                "total": 3944.515668
             }
         ],
         "variant": "block"
@@ -175,6 +205,12 @@
                 "block": 512,
                 "repeat": 25,
                 "total": 4333.061829
+            },
+            {
+                "average": 168.25581232000002,
+                "block": 1024,
+                "repeat": 25,
+                "total": 4206.395308
             }
         ],
         "variant": "block"
@@ -205,6 +241,12 @@
                 "block": 512,
                 "repeat": 25,
                 "total": 9988.538403
+            },
+            {
+                "average": 365.22893916,
+                "block": 1024,
+                "repeat": 25,
+                "total": 9130.723479
             }
         ],
         "variant": "block"
