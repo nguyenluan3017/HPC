@@ -137,3 +137,33 @@ cblas_dgemm(
 ```
 ## Experimental Results
 
+```
+=== System Information ===
+OS Name: LINUX
+OS Version: 6.6.87.2-microsoft-standard-WSL2
+Platform: Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+Architecture: x86_64
+CPU Count: 16
+CPU Model: AMD EPYC 7763 64-Core Processor
+
+=== CPU Cache Information ===
+L2 CACHE: 4 MiB (8 instances)
+L1D CACHE: 256 KiB (8 instances)
+L1I CACHE: 256 KiB (8 instances)
+L3 CACHE: 32 MiB (1 instance)
+L2 UNIFIED CACHE: 512K
+L1 DATA CACHE: 32K
+L3 UNIFIED CACHE: 32768K
+L1 INSTRUCTION CACHE: 32K
+```
+
+The experiment runs on a *Ubuntu Linux* computer of which specifications are:
+
+| Component | Specification |
+|-----------|---------------|
+| Operating System | Ubuntu Linux |
+| Kernel Version | 6.6.87.2 |
+| Architecture | x86_64 |
+| CPU Model | AMD Processor |
+| CPU Count | 16 cores |
+
