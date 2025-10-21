@@ -3,7 +3,7 @@
 In all implementation, we employ cache-friendly single dimensional arrays of size N * N to represent square matrices. The size of submatrices must divide N.
 
 This has some advantages:
-1. All elements are in one continueous block of memory, for example A[1 .. N * N]
+1. All elements are in one contiguous block of memory, for example A[1 .. N * N]
 2. Only one memory access to reach the element, e.g., A[i * N + j] instead of A[i][j]
 3. Adjacent elements for both row-wise and column-wise access offer good spatial locality
 
@@ -183,7 +183,7 @@ Basing on the estimation, we provide the summary table for all test scenarios:
 
 #### Naive and Block Implementation Comparison
 
-First we look at two blocking implementations: `matrix_mult_block` versus `matrix_mult_naive`:
+First we look at the runtime for two blocking implementations: `matrix_mult_block` (block) versus `matrix_mult_naive` (naive):
 
 | Matrix Size | Naive (seconds) | Best Block Block Size | Best Block Time (seconds) | Speedup (Naive/Block) |
 |-------------|-----------------|-------------------------|---------------------|-------------------------------|
@@ -197,6 +197,11 @@ First we look at two blocking implementations: `matrix_mult_block` versus `matri
 
 ![Naive versus Block Implemenation](img/naive_versus_block.png "")
 
+Also, we 
+
 Key Observations:
 
--  
+- Loop tiling technique brings about more than two time (e.g., ~2.2 to 2.7 times) faster calculation time. The implementation deliberately omits advanced optimization such as multi-threading, kij loop ordering, SIMD, iteration unrolling, etc. This means the significant results is because of the increment in cache hit rate.
+- 
+
+## References
