@@ -137,26 +137,6 @@ cblas_dgemm(
 ```
 ## Experimental Results
 
-```
-=== System Information ===
-OS Name: LINUX
-OS Version: 6.6.87.2-microsoft-standard-WSL2
-Platform: Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
-Architecture: x86_64
-CPU Count: 16
-CPU Model: AMD EPYC 7763 64-Core Processor
-
-=== CPU Cache Information ===
-L2 CACHE: 4 MiB (8 instances)
-L1D CACHE: 256 KiB (8 instances)
-L1I CACHE: 256 KiB (8 instances)
-L3 CACHE: 32 MiB (1 instance)
-L2 UNIFIED CACHE: 512K
-L1 DATA CACHE: 32K
-L3 UNIFIED CACHE: 32768K
-L1 INSTRUCTION CACHE: 32K
-```
-
 The experiment runs on a *Ubuntu Linux* computer of which specifications are:
 
 | Component | Specification |
@@ -166,4 +146,20 @@ The experiment runs on a *Ubuntu Linux* computer of which specifications are:
 | Architecture | x86_64 |
 | CPU Model | AMD Processor |
 | CPU Count | 16 cores |
+| L1 Cache | 32K |
+| L2 Cache | 4 MiB |
+| L3 Cache | 32 MiB |
+
+We first calculate the maximum block size fitting CPU cache. Let $H$ be the maximum block size, we have:
+- One block from matrix A: $H^2$ elements 
+- One block from matrix B: $H^2$ elements
+- One block from matrix C: $H^2$ elements
+
+In total, there are $3 * H^2$ elements of 64-bit floating point. Thus, CPU cache must be at least $3 * H^2 * 8$ bytes. Or, equivalently,
+
+$$3 * H^2 * 8 \le \text{CPU cache size}$$
+$$\iff H \le \sqrt{\frac{\text{CPU cache size}}{3 * 8}}$$
+
+In our program, we only implement one layer cache (check `matrix_mult_block` and `matrix_mult_cblas_block` implementations). Hence, we only take into account the largest L3 Cache. Alternating L3 Cache size of 32 MiB = 33,554,432 bytes to the formula, we obtain $H \le 1182.41335$ bytes. This is the block size's upper bound in the benchmark. Secondly, for the ease of estimation, we choose matrix sizes which are multiples of 512. All matrix sizes we run our tests: 1024, 1536, 2048, 2560, 3072, 3584, and 4096. Lastly, block size must divide all matrix sizes, 
+
 
