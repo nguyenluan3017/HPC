@@ -3,7 +3,7 @@
 In all implementation, we employ cache-friendly single dimensional arrays of size N * N to represent square matrices. The size of submatrices must divide N.
 
 This has some advantages:
-1. All elements are in one continueous block of memory, for example A[1 .. N * N]
+1. All elements are in one contiguous block of memory, for example A[1 .. N * N]
 2. Only one memory access to reach the element, e.g., A[i * N + j] instead of A[i][j]
 3. Adjacent elements for both row-wise and column-wise access offer good spatial locality
 
@@ -73,8 +73,8 @@ for (int bi = 0; bi < N; bi += block_size)
 1. Spatial locality: The block is sufficient small, so access to consecutive elements in array `A` is predicted by the CPU for cache optimization.
 
 2. Temperal locality: 
-- Variable `sum` is stored in CPU register for fast access. 
-- Elements from `A[i * N]` to `A[i * N + k]` are reused $blockSize^2$ times within `j` loop.
+    - Variable `sum` is stored in CPU register for fast access. 
+    - Elements from `A[i * N]` to `A[i * N + k]` are reused $blockSize^2$ times within `j` loop.
 
 ### Multiplication of matrix blocks using cblas_dgemm in ijk implementation
 
@@ -137,25 +137,7 @@ cblas_dgemm(
 ```
 ## Experimental Results
 
-```
-=== System Information ===
-OS Name: LINUX
-OS Version: 6.6.87.2-microsoft-standard-WSL2
-Platform: Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
-Architecture: x86_64
-CPU Count: 16
-CPU Model: AMD EPYC 7763 64-Core Processor
-
-=== CPU Cache Information ===
-L2 CACHE: 4 MiB (8 instances)
-L1D CACHE: 256 KiB (8 instances)
-L1I CACHE: 256 KiB (8 instances)
-L3 CACHE: 32 MiB (1 instance)
-L2 UNIFIED CACHE: 512K
-L1 DATA CACHE: 32K
-L3 UNIFIED CACHE: 32768K
-L1 INSTRUCTION CACHE: 32K
-```
+### Environment Specification
 
 The experiment runs on a *Ubuntu Linux* computer of which specifications are:
 
@@ -166,4 +148,76 @@ The experiment runs on a *Ubuntu Linux* computer of which specifications are:
 | Architecture | x86_64 |
 | CPU Model | AMD Processor |
 | CPU Count | 16 cores |
+| L1 Cache | 32K |
+| L2 Cache | 4 MiB |
+| L3 Cache | 32 MiB |
 
+### Estimation
+
+We first calculate the maximum block size fitting CPU cache. Let $H$ be the maximum block size, we have:
+- One block from matrix A: $H^2$ elements 
+- One block from matrix B: $H^2$ elements
+- One block from matrix C: $H^2$ elements
+
+In total, there are $3 * H^2$ elements of 64-bit floating point. Thus, CPU cache must be at least $3 * H^2 * 8$ bytes. Or, equivalently,
+
+$$3 * H^2 * 8 \le \text{CPU cache size}$$
+$$\iff H \le \sqrt{\frac{\text{CPU cache size}}{3 * 8}}$$
+
+In our program, we only implement one layer cache (check `matrix_mult_block` and `matrix_mult_cblas_block` implementations). Hence, we only take into account the largest L3 Cache. Alternating L3 Cache size of 32 MiB = 33,554,432 bytes to the formula, we obtain $H \le 1182.41335$ bytes. This is the block size's upper bound in the benchmark. 
+
+Secondly, for the ease of estimation, we choose matrix sizes which are multiples of 512. All matrix sizes we run our tests: 1024, 1536, 2048, 2560, 3072, 3584, and 4096. Lastly, for blocking implementations, the chosen block sizes must be common divisors of all matrix sizes. 
+
+### Test Scenarios
+
+Basing on the estimation, we provide the summary table for all test scenarios:
+
+| Implementation | Matrix Size | Block Size | 
+|---|---|---|
+| Naive | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | |
+| Block | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | 16, 128, 256, 512, 1024 |
+| CBlas | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | |
+| CBlas + Block | 1024, 1536, 2048, 2560, 3072, 3584, 4096 | 16, 128, 256, 512, 1024 |
+
+### Benchmark Results and Analysis
+
+#### Naive and Block Implementation Comparison
+
+First we look at the runtime for two blocking implementations: `matrix_mult_block` (block) versus `matrix_mult_naive` (naive):
+
+| Matrix Size | Naive (seconds) | Best Block Block Size | Best Block Time (seconds) | Speedup (Naive/Block) |
+|-------------|-----------------|-------------------------|---------------------|-------------------------------|
+| 1024 | 9.343332 | 128 | 3.638008 | 2.57x |
+| 1536 | 27.428002 | 256 | 12.745546 | 2.15x |
+| 2048 | 69.980651 | 256 | 30.772002 | 2.27x |
+| 2560 | 140.638135 | 1024 | 60.225147 | 2.34x |
+| 3072 | 255.616116 | 256 | 107.104698 | 2.39x |
+| 3584 | 434.211685 | 1024 | 168.255812 | 2.58x |
+| 4096 | 621.830439 | 128 | 232.936458 | 2.67x |
+
+![Naive versus Block Implemenation](img/naive_versus_block.png "")
+
+Also, we 
+
+Key Observations:
+
+- Loop tiling technique brings about more than two time (e.g., ~2.2 to 2.7 times) faster calculation time. The implementation deliberately omits advanced optimization such as multi-threading, kij loop ordering, SIMD, iteration unrolling, etc. This means the significant results is because of the increment in cache hit rate.
+
+
+#### Cblas and Cblas-block Implementation Comparison
+
+Let's look at the runtime results for 
+
+| Matrix Size | Cblas (seconds) | Best Cblas-block Block Size | Best Cblas-block Time (seconds) | Speedup (Cblas/Cblas-block) |
+|-------------|-----------------|-------------------------|---------------------|-------------------------------|
+| 1024 | 0.016634 | 1024 | 0.015478 | 1.07x |
+| 1536 | 0.035903 | 1024 | 0.059824 | 0.60x |
+| 2048 | 0.071432 | 1024 | 0.095189 | 0.75x |
+| 2560 | 0.140348 | 512 | 0.193757 | 0.72x |
+| 3072 | 0.218941 | 1024 | 0.295758 | 0.74x |
+| 3584 | 0.367671 | 1024 | 0.525116 | 0.70x |
+| 4096 | 0.519840 | 1024 | 0.800810 | 0.65x |
+
+![Cblas and Cblas-block Implementation](img/cblas_versus_cblas-block.png)
+
+## References
