@@ -1,6 +1,6 @@
 ## Solution Explanation
 
-In all implementation, we employ cache-friendly single dimensional arrays of size N * N to represent square matrices. The size of submatrices must divide N.
+In all implementation, we employ cache-friendly single dimensional arrays of size N * N to represent square matrices. In implementations which uses loop tiling, the size of submatrices must divide N.
 
 This has some advantages:
 1. All elements are in one contiguous block of memory, for example A[1 .. N * N]
@@ -197,8 +197,6 @@ First we look at the runtime for two blocking implementations: `matrix_mult_bloc
 
 ![Naive versus Block Implemenation](img/naive_versus_block.png "")
 
-Also, we 
-
 Key Observations:
 
 - Loop tiling technique brings about more than two time (e.g., ~2.2 to 2.7 times) faster calculation time. The implementation deliberately omits advanced optimization such as multi-threading, kij loop ordering, SIMD, iteration unrolling, etc. This means the significant results is because of the increment in cache hit rate.
@@ -206,7 +204,7 @@ Key Observations:
 
 #### Cblas and Cblas-block Implementation Comparison
 
-Let's look at the runtime results for 
+Let's look at the runtime results:
 
 | Matrix Size | Cblas (seconds) | Best Cblas-block Block Size | Best Cblas-block Time (seconds) | Speedup (Cblas/Cblas-block) |
 |-------------|-----------------|-------------------------|---------------------|-------------------------------|
@@ -220,4 +218,6 @@ Let's look at the runtime results for
 
 ![Cblas and Cblas-block Implementation](img/cblas_versus_cblas-block.png)
 
-## References
+Key Observation:
+
+- The loop tiling technique in `matrix_mult_blas_block` doesn't make the calculation faster than `matrix_mult_cblas`. This is because of the overheads of the three four ijk loops.
