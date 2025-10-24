@@ -3,6 +3,7 @@
 In all implementation, we employ cache-friendly single dimensional arrays of size N * N to represent square matrices. In implementations which uses loop tiling, the size of submatrices must divide N.
 
 This has some advantages:
+
 1. All elements are in one contiguous block of memory, for example A[1 .. N * N]
 2. Only one memory access to reach the element, e.g., A[i * N + j] instead of A[i][j]
 3. Adjacent elements for both row-wise and column-wise access offer good spatial locality
@@ -34,6 +35,7 @@ The function is `void matrix_mult_block(matrix_t *, matrix_t *, int, matrix_t *,
 #### Loop Tiling
 
 The matrix is divided into `N / block_size` square sub-matrices (called blocks). The three outer loops (`bi`, `bj`, and `bk`) browse through each block. 
+
 - Loops `bi` and `bj` select the result block in matrix C
 - Loop `bk` selects blocks in A and B to compute for this block in C
 - The inner loops `i`, `j`, and `k` perform actual matrix multiplication.
@@ -155,6 +157,7 @@ The experiment runs on a *Ubuntu Linux* computer of which specifications are:
 ### Estimation
 
 We first calculate the maximum block size fitting CPU cache. Let $H$ be the maximum block size, we have:
+
 - One block from matrix A: $H^2$ elements 
 - One block from matrix B: $H^2$ elements
 - One block from matrix C: $H^2$ elements
