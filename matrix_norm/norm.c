@@ -6,10 +6,23 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #define ADD_FLAG(name, value) const char *const name = #value
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define BENCHMARK(result, subroutine) \
+    double result; \
+    { \
+        struct timespec ts_start; \
+        struct timespec ts_end; \
+        clock_gettime(CLOCK_MONOTONIC, &ts_start); \
+        double start_time = ts_start.tv_sec + ts_start.tv_nsec * 1e-9; \
+        subroutine; \
+        clock_gettime(CLOCK_MONOTONIC, &ts_end); \
+        double end_time = ts_end.tv_sec + ts_end.tv_nsec * 1e-9; \
+        result = end_time - start_time; \
+    }
 
 #define DEFAULT_MATRIX_SIZE 1024
 #define DEFAULT_MIN_VALUE 1
@@ -253,18 +266,31 @@ void matrix_mult_serial(size_t block_size, matrix_t *lhs, matrix_t *rhs, matrix_
         {
             for (size_t bk = 0; bk < N; bk += block_size)
             {
-                int i_end = MIN(bi + block_size, N);
-                int j_end = MIN(bj + block_size, N);
-                int k_end = MIN(bk + block_size, N);
+                const int i_end = MIN(bi + block_size, N);
+                const int j_end = MIN(bj + block_size, N);
+                const int k_end = MIN(bk + block_size, N);
 
                 for (int k = bk; k < k_end; k++)
                 {
                     for (int i = bi; i < i_end; i++)
                     {
-                        const double lhs_data_ik = lhs->data[i * N + k];
-                        for (int j = bj; j < j_end; j++)
+                        register const double lhs_data = lhs->data[i * N + k];
+                        register double *rhs_row = &rhs->data[k * N];
+                        register double *result_row = &result->data[i * N];
+                        register const int limit = j_end - ((j_end - bj) % 4);
+                        register int j;
+
+                        for (j = bj; j < limit; j += 4)
                         {
-                            result->data[i * N + j] += lhs_data_ik * rhs->data[k * N + j];
+                            result_row[j] += lhs_data * rhs_row[j];
+                            result_row[j + 1] += lhs_data * rhs_row[j + 1];
+                            result_row[j + 2] += lhs_data * rhs_row[j + 2];
+                            result_row[j + 3] += lhs_data * rhs_row[j + 3];
+                        }
+
+                        for (; j < j_end; j++)
+                        {
+                            result_row[j] += lhs_data * rhs_row[j];
                         }
                     }
                 }
@@ -302,6 +328,8 @@ void matrix_mult_cblas(matrix_t *lhs, matrix_t *rhs, matrix_t *result)
     );
 }
 
+void matrix_mult_
+
 int main(int argc, const char **argv)
 {
     args_t args = args_parse(argc, argv);
@@ -326,19 +354,21 @@ int main(int argc, const char **argv)
         matrix_random(A, args.flag_min_value, args.flag_max_value);
         matrix_random(B, args.flag_min_value, args.flag_max_value);
 
-        puts("LHS:");
-        matrix_println(A);
+        //puts("LHS:");
+        //matrix_println(A);
         
-        puts("RHS:");
-        matrix_println(B);
+        //puts("RHS:");
+        //matrix_println(B);
 
-        puts("Serial result:");
-        matrix_mult_serial(args.flag_block_size, A, B, C);
-        matrix_println(C);
+        //puts("Serial result:");
+        BENCHMARK(serial_runtime, matrix_mult_serial(args.flag_block_size, A, B, C));
+        printf("serial_runtime = %f\n", serial_runtime);
+        //matrix_println(C);
         
-        puts("Cblas result:");
-        matrix_mult_cblas(A, B, D);
-        matrix_println(D);
+        //puts("Cblas result:");
+        BENCHMARK(cblas_runtime, matrix_mult_cblas(A, B, D));
+        printf("cblas_runtime = %f\n", cblas_runtime);
+        //matrix_println(D);
 
         if (matrix_compare(C, D) != 0)
         {
