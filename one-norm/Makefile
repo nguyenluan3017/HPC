@@ -11,12 +11,15 @@ ifeq ($(UNAME_S),Darwin)
 	LIBS = -lpthread -L$(shell brew --prefix openblas)/lib -lopenblas
 endif
 
-norm:
+norm: norm.c
 	mkdir -p bin/
 	$(CC) $(INCLUDES) $(CFLAGS) norm.c -o ./bin/norm $(LIBS)
+
+benchmark: benchmark.go norm
+	go run benchmark.go --output-dir $(shell echo $(OUTPUT_DIR))
 
 test: bin/norm
 	bin/norm --help
 
-clean:
+clean: ./bin
 	rm -rfv ./bin
