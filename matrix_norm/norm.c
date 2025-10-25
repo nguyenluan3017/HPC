@@ -34,7 +34,7 @@
 #define FLAG_BLOCK_SIZE "--block-size"
 #define FLAG_NUMBER_OF_THREADS "--number-of-threads"
 
-typedef struct
+typedef struct args_t
 {
     bool flag_help;
     size_t flag_matrix_size;
@@ -44,13 +44,13 @@ typedef struct
     size_t flag_number_of_threads;
 } args_t;
 
-typedef struct
+typedef struct matrix_t
 {
     size_t size;
     double *data;
 } matrix_t;
 
-typedef struct 
+typedef struct matrix_mult_worker_params_t
 {
     matrix_t *lhs;
     matrix_t *rhs;
@@ -61,7 +61,7 @@ typedef struct
     pthread_mutex_t *mutex;
 } matrix_mult_worker_params_t; 
 
-typedef struct
+typedef struct matrix_norm_worker_params_t
 {
     matrix_t *mat;
     long double max_sum;
@@ -398,9 +398,7 @@ void *matrix_mult_worker(void *param)
     matrix_t *result = worker_params->result;
     const size_t N = lhs->size;
     const size_t block_size = worker_params->block_size;
-    const size_t start_index = worker_params->block_start_index;
-    const size_t end_index = worker_params->block_end_index;
-    const size_t bi = start_index;
+    const size_t bi = worker_params->block_start_index;
 
     for (size_t bj = 0; bj < N; bj += block_size)
     {
