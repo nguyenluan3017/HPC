@@ -8,7 +8,6 @@
 #include <math.h>
 #include <time.h>
 
-#define ADD_FLAG(name, value) const char *const name = value
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define BENCHMARK(subroutine, result)                                  \
@@ -29,13 +28,12 @@
 #define DEFAULT_MAX_VALUE 1000
 #define DEFAULT_BLOCK_SIZE 512
 #define DEFAULT_NUM_THREADS 4
-
-ADD_FLAG(FLAG_HELP, "--help");
-ADD_FLAG(FLAG_MATRIX_SIZE, "--matrix-size");
-ADD_FLAG(FLAG_MIN_VALUE, "--min-value");
-ADD_FLAG(FLAG_MAX_VALUE, "--max-value");
-ADD_FLAG(FLAG_BLOCK_SIZE, "--block-size");
-ADD_FLAG(FLAG_NUMBER_OF_THREADS, "--number-of-threads");
+#define FLAG_HELP "--help"
+#define FLAG_MATRIX_SIZE "--matrix-size"
+#define FLAG_MIN_VALUE "--min-value"
+#define FLAG_MAX_VALUE "--max-value"
+#define FLAG_BLOCK_SIZE "--block-size"
+#define FLAG_NUMBER_OF_THREADS "--number-of-threads"
 
 typedef struct
 {
@@ -60,8 +58,19 @@ typedef struct
     matrix_t *result;
     size_t block_start_index;
     size_t block_end_index;
+    size_t block_size;
     pthread_mutex_t *mutex;
-} worker_params_t; 
+} matrix_mult_worker_params_t; 
+
+typedef struct
+{
+    matrix_t *mat;
+    long double max_sum;
+    size_t block_size;
+    size_t start_index;
+    size_t end_index;
+} matrix_norm_worker_params_t;
+
 
 void show_help(const char *program_name)
 {
@@ -123,7 +132,7 @@ void args_validate(args_t *args)
         args->flag_matrix_size);
 
     panic_unless(
-        args->flag_number_of_threads > args->flag_matrix_size,
+        args->flag_number_of_threads <= args->flag_matrix_size,
         "The number of threads (%d) should be no more than the matrix size (%d)\n",
         args->flag_number_of_threads,
         args->flag_matrix_size);        
@@ -321,19 +330,19 @@ void matrix_mult_serial(size_t block_size, matrix_t *lhs, matrix_t *rhs, matrix_
         {
             for (size_t bk = 0; bk < N; bk += block_size)
             {
-                const int i_end = MIN(bi + block_size, N);
-                const int j_end = MIN(bj + block_size, N);
-                const int k_end = MIN(bk + block_size, N);
+                const size_t i_end = MIN(bi + block_size, N);
+                const size_t j_end = MIN(bj + block_size, N);
+                const size_t k_end = MIN(bk + block_size, N);
 
-                for (int k = bk; k < k_end; k++)
+                for (size_t k = bk; k < k_end; k++)
                 {
-                    for (int i = bi; i < i_end; i++)
+                    for (size_t i = bi; i < i_end; i++)
                     {
                         register const double lhs_data = lhs->data[i * N + k];
                         register double *rhs_row = &rhs->data[k * N];
                         register double *result_row = &result->data[i * N];
-                        register const int limit = j_end - ((j_end - bj) % 4);
-                        register int j;
+                        register const size_t limit = j_end - ((j_end - bj) % 4);
+                        register size_t j;
 
                         for (j = bj; j < limit; j += 4)
                         {
@@ -383,21 +392,63 @@ void matrix_mult_cblas(matrix_t *lhs, matrix_t *rhs, matrix_t *result)
 
 void *matrix_mult_worker(void *param)
 {
-    worker_params_t *worker_param = (worker_params_t *)param;
+    matrix_mult_worker_params_t *worker_params = (matrix_mult_worker_params_t *)param;
+    pthread_mutex_t *result_lock = worker_params->mutex;
+    matrix_t *lhs = worker_params->lhs;
+    matrix_t *rhs = worker_params->rhs;
+    matrix_t *result = worker_params->result;
+    const size_t N = lhs->size;
+    const size_t block_size = worker_params->block_size;
+    const size_t start_index = worker_params->block_start_index;
+    const size_t end_index = worker_params->block_end_index;
+    const size_t bi = start_index;
 
-    matrix_t *lhs = worker_param->lhs;
-    matrix_t *rhs = worker_param->rhs;
-    matrix_t *result = worker_param->result;
+    for (size_t bj = 0; bj < N; bj += block_size)
+    {
+        for (size_t bk = 0; bk < N; bk += block_size)
+        {
+            const size_t i_end = worker_params->block_end_index;
+            const size_t j_end = MIN(bj + block_size, N);
+            const size_t k_end = MIN(bk + block_size, N);
+            
+            for (size_t k = bk; k < k_end; k++)
+            {
+                for (size_t i = bi; i < i_end; i++)
+                {
+                    register const double lhs_data = lhs->data[i * N + k];
+                    register double *rhs_row = &rhs->data[k * N];
+                    register double *result_row = &result->data[i * N];
+                    register const size_t limit = j_end - ((j_end - bj) % 4);
+                    register size_t j;
+                    
+                    pthread_mutex_lock(result_lock);
+                    for (j = bj; j < limit; j += 4)
+                    {
+                        result_row[j] += lhs_data * rhs_row[j];
+                        result_row[j + 1] += lhs_data * rhs_row[j + 1];
+                        result_row[j + 2] += lhs_data * rhs_row[j + 2];
+                        result_row[j + 3] += lhs_data * rhs_row[j + 3];
+                    }
 
-    
+                    for (; j < j_end; j++)
+                    {
+                        result_row[j] += lhs_data * rhs_row[j];
+                    }
+                    pthread_mutex_unlock(result_lock);
+                }
+            }
+        }
+    }
+
+    pthread_exit(NULL);
 }
 
-void matrix_mult_threaded(size_t num_threads, matrix_t *lhs, matrix_t *rhs, matrix_t *result)
+void matrix_mult_threaded(size_t num_threads, size_t block_size, matrix_t *lhs, matrix_t *rhs, matrix_t *result)
 {
     const size_t N = lhs->size;
     const size_t PARTITION_SIZE = (size_t)ceil((double)N / (double)num_threads);
     pthread_t *threads;
-    worker_params_t *worker_params;
+    matrix_mult_worker_params_t *worker_params;
     pthread_mutex_t *mutex;
 
     panic_unless(
@@ -407,7 +458,7 @@ void matrix_mult_threaded(size_t num_threads, matrix_t *lhs, matrix_t *rhs, matr
         rhs->size, rhs->size);
 
     threads = (pthread_t *)calloc(num_threads, sizeof(pthread_t));
-    worker_params = (worker_params_t *)calloc(num_threads, sizeof(worker_params_t));
+    worker_params = (matrix_mult_worker_params_t *)calloc(num_threads, sizeof(matrix_mult_worker_params_t));
     mutex = (pthread_mutex_t *)calloc(1, sizeof(pthread_mutex_t));
 
     for (size_t i = 0; i < num_threads; i++)
@@ -417,7 +468,8 @@ void matrix_mult_threaded(size_t num_threads, matrix_t *lhs, matrix_t *rhs, matr
         worker_params[i].result = result;
         worker_params[i].block_start_index = i * PARTITION_SIZE;
         worker_params[i].block_end_index = MIN((i + 1) * PARTITION_SIZE, N);
-        worker_params[i].mutex = &mutex;
+        worker_params[i].mutex = mutex;
+        worker_params[i].block_size = block_size;
 
         pthread_create(
             &threads[i],
@@ -434,8 +486,71 @@ void matrix_mult_threaded(size_t num_threads, matrix_t *lhs, matrix_t *rhs, matr
 
     free(threads);
     free(worker_params);
-    pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(mutex);
     free(mutex);
+}
+
+void *matrix_norm_worker(void *params)
+{
+    matrix_norm_worker_params_t *worker_params = (matrix_norm_worker_params_t *)params;
+    const size_t N = worker_params->mat->size;
+    const double *data = worker_params->mat->data;
+    const size_t start_index = worker_params->start_index;
+    const size_t end_index = worker_params->end_index;
+
+    for (size_t i = start_index; i < end_index; i++)
+    {
+        const double *row = &data[i * N];
+        for (size_t j = 0; j < N; j++)
+        {
+            
+        }
+    }
+
+    pthread_exit(NULL);
+}
+
+long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t *mat)
+{
+    const size_t N = mat->size;
+    const size_t PARTITION_SIZE = (size_t)ceil((double)N / (double)num_threads);
+    pthread_t *threads;
+    matrix_norm_worker_params_t *worker_params;
+    long double *sums;
+    long double result;
+
+    threads = (pthread_t *)calloc(num_threads, sizeof(pthread_t));
+    worker_params = (matrix_norm_worker_params_t *)calloc(num_threads, sizeof(matrix_norm_worker_params_t));
+    sums = (long double *)calloc(num_threads, sizeof(long double));
+
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        worker_params[i].mat = mat;
+        worker_params[i].start_index = i * PARTITION_SIZE;
+        worker_params[i].end_index = MIN((i + 1) * PARTITION_SIZE, N);
+        worker_params[i].block_size = block_size;
+        worker_params[i].max_sum = 0;
+
+        pthread_create(
+            &threads[i],
+            NULL,
+            matrix_norm_worker,
+            (void *)&worker_params[i]
+        );
+    }
+
+    result = 0;
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        pthread_join(threads[i], NULL);
+        result = MAX(result, worker_params[i].max_sum);
+    }
+
+    free(threads);
+    free(worker_params);
+    free(sums);
+
+    return result;
 }
 
 int main(int argc, const char **argv)
@@ -469,19 +584,16 @@ int main(int argc, const char **argv)
         // matrix_println(B);
 
         // puts("Serial result:");
-        BENCHMARK(matrix_mult_serial(args.flag_block_size, A, B, C), serial_runtime);
-        printf("serial_runtime = %f\n", serial_runtime);
+        BENCHMARK(matrix_mult_cblas(A, B, C), cblas_runtime);
+        printf("cblas_runtime = %f\n", cblas_runtime);
         // matrix_println(C);
 
         // puts("Cblas result:");
-        BENCHMARK(matrix_mult_naive(A, B, D), naive_runtime);
-        printf("naive_runtime = %f\n", naive_runtime);
+        BENCHMARK(matrix_mult_threaded(args.flag_number_of_threads, args.flag_block_size, A, B, D), threaded_runtime);
+        printf("threaded_runtime = %f\n", threaded_runtime);
         // matrix_println(D);
 
-        if (matrix_compare(C, D) != 0)
-        {
-            printf("Discrepancy in result!");
-        }
+        panic_unless(matrix_compare(C, D) == 0, "Discrepancy in result!\n");
 
         matrix_destroy(&A);
         matrix_destroy(&B);
