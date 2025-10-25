@@ -11,7 +11,6 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define BENCHMARK(subroutine, result)                                  \
-    double result;                                                     \
     {                                                                  \
         struct timespec ts_start;                                      \
         struct timespec ts_end;                                        \
@@ -494,18 +493,32 @@ void *matrix_norm_worker(void *params)
 {
     matrix_norm_worker_params_t *worker_params = (matrix_norm_worker_params_t *)params;
     const size_t N = worker_params->mat->size;
-    const double *data = worker_params->mat->data;
     const size_t start_index = worker_params->start_index;
     const size_t end_index = worker_params->end_index;
+    const size_t block_size = worker_params->block_size;
+    double *data = worker_params->mat->data;
+    register long double row_sum;
+    register double *row;
+    register size_t j_end;
+    register size_t j;
+    long double max_row_sum = 0.0;
 
     for (size_t i = start_index; i < end_index; i++)
     {
-        const double *row = &data[i * N];
-        for (size_t j = 0; j < N; j++)
+        row = &data[i * N];
+        row_sum = 0.0;
+        for (size_t bj = 0; bj < N; bj += block_size)
         {
-            
+            j_end = MIN(bj + block_size, N);
+            for (j = bj; j < j_end; j++)
+            {
+                row_sum += fabsl(row[j]);
+            }
         }
+        max_row_sum = MAX(max_row_sum, row_sum);
     }
+
+    worker_params->max_sum = max_row_sum;
 
     pthread_exit(NULL);
 }
@@ -556,6 +569,15 @@ long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t
 int main(int argc, const char **argv)
 {
     args_t args = args_parse(argc, argv);
+    matrix_t *A;
+    matrix_t *B;
+    matrix_t *C;
+    matrix_t *D;
+    long double norm_result;
+    double cblas_runtime;
+    double threaded_runtime;
+    double norm_runtime;
+
     srand(time(NULL));
 
     if (args.flag_help)
@@ -564,11 +586,6 @@ int main(int argc, const char **argv)
     }
     else
     {
-        matrix_t *A;
-        matrix_t *B;
-        matrix_t *C;
-        matrix_t *D;
-
         A = matrix_init(args.flag_matrix_size);
         B = matrix_init(args.flag_matrix_size);
         C = matrix_init(args.flag_matrix_size);
@@ -594,6 +611,13 @@ int main(int argc, const char **argv)
         // matrix_println(D);
 
         panic_unless(matrix_compare(C, D) == 0, "Discrepancy in result!\n");
+
+        BENCHMARK(
+            norm_result = matrix_norm_threaded(args.flag_number_of_threads, args.flag_block_size, D), 
+            norm_runtime
+        );
+        printf("norm result = %Lf\n", norm_result);
+        printf("norm_runtime = %f\n", norm_runtime);
 
         matrix_destroy(&A);
         matrix_destroy(&B);
