@@ -11,7 +11,7 @@
 #define ADD_FLAG(name, value) const char *const name = #value
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define BENCHMARK(result, subroutine) \
+#define BENCHMARK(subroutine, result) \
     double result; \
     { \
         struct timespec ts_start; \
@@ -328,7 +328,10 @@ void matrix_mult_cblas(matrix_t *lhs, matrix_t *rhs, matrix_t *result)
     );
 }
 
-void matrix_mult_
+void matrix_mult_pthread(matrix_t *lhs, matrix_t *rhs, matrix_t *result)
+{
+    
+}
 
 int main(int argc, const char **argv)
 {
@@ -361,12 +364,12 @@ int main(int argc, const char **argv)
         //matrix_println(B);
 
         //puts("Serial result:");
-        BENCHMARK(serial_runtime, matrix_mult_serial(args.flag_block_size, A, B, C));
+        BENCHMARK(matrix_mult_serial(args.flag_block_size, A, B, C), serial_runtime);
         printf("serial_runtime = %f\n", serial_runtime);
         //matrix_println(C);
         
         //puts("Cblas result:");
-        BENCHMARK(cblas_runtime, matrix_mult_cblas(A, B, D));
+        BENCHMARK(matrix_mult_cblas(A, B, D), cblas_runtime);
         printf("cblas_runtime = %f\n", cblas_runtime);
         //matrix_println(D);
 
