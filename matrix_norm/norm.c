@@ -22,17 +22,27 @@
         result = end_time - start_time;                                \
     }
 
-#define DEFAULT_MATRIX_SIZE 1024
-#define DEFAULT_MIN_VALUE 1
-#define DEFAULT_MAX_VALUE 1000
-#define DEFAULT_BLOCK_SIZE 512
-#define DEFAULT_NUM_THREADS 4
 #define FLAG_HELP "--help"
 #define FLAG_MATRIX_SIZE "--matrix-size"
 #define FLAG_MIN_VALUE "--min-value"
 #define FLAG_MAX_VALUE "--max-value"
 #define FLAG_BLOCK_SIZE "--block-size"
 #define FLAG_NUMBER_OF_THREADS "--number-of-threads"
+#define FLAG_REPEATS "--repeats"
+#define FLAG_IMPL "--impl"
+
+#define IMPL_NAIVE "naive"
+#define IMPL_SERIAL "serial"
+#define IMPL_CBLAS "cblas"
+#define IMPL_THREADED "threaded"
+
+#define DEFAULT_MATRIX_SIZE 1024
+#define DEFAULT_MIN_VALUE 1
+#define DEFAULT_MAX_VALUE 1000
+#define DEFAULT_BLOCK_SIZE 512
+#define DEFAULT_NUM_THREADS 4
+#define DEFAULT_REPEATS 1
+#define DEFAULT_IMPL IMPL_CBLAS
 
 typedef struct args_t
 {
@@ -42,6 +52,8 @@ typedef struct args_t
     int flag_max_value;
     size_t flag_block_size;
     size_t flag_number_of_threads;
+    size_t flag_repeats;
+    const char *flag_impl;
 } args_t;
 
 typedef struct matrix_t
@@ -59,7 +71,7 @@ typedef struct matrix_mult_worker_params_t
     size_t block_end_index;
     size_t block_size;
     pthread_mutex_t *mutex;
-} matrix_mult_worker_params_t; 
+} matrix_mult_worker_params_t;
 
 typedef struct matrix_norm_worker_params_t
 {
@@ -70,12 +82,26 @@ typedef struct matrix_norm_worker_params_t
     size_t end_index;
 } matrix_norm_worker_params_t;
 
+typedef struct benchmark_results_t
+{
+    double *benchmark_runtimes;
+    double *norm_runtimes;
+    double benchmark_total_runtime;
+    double norm_total_runtime;
+    double benchmark_avg_runtime;
+    double norm_avg_runtime;
+    const char *impl;
+    size_t repeats;
+    size_t block_size;
+    size_t num_threads;
+    size_t matrix_size;
+} benchmark_results_t;
 
 void show_help(const char *program_name)
 {
     printf("Usage:\n");
     printf("  %s [FLAGS]\n\n", program_name);
-    
+
     printf("Description:\n");
     printf("  Computes the norm of the product of NxN dense matrices using various algorithms\n");
     printf("  including naive, serial blocked, CBLAS, and parallel pthread implementations.\n\n");
@@ -89,17 +115,44 @@ void show_help(const char *program_name)
     printf("  %-25s This must divide matrix size (default: %d).\n", "", DEFAULT_BLOCK_SIZE);
     printf("  %-25s Set number of threads for parallel computation\n", FLAG_NUMBER_OF_THREADS);
     printf("  %-25s (default: %d).\n", "", DEFAULT_NUM_THREADS);
+    printf("  %-25s Set number of benchmark repetitions\n", FLAG_REPEATS);
+    printf("  %-25s (default: %d).\n", "", DEFAULT_REPEATS);
+    printf("  %-25s Set implementation to use:\n", FLAG_IMPL);
+    printf("  %-25s %s, %s, %s, %s (default: %s).\n", "", IMPL_NAIVE, IMPL_SERIAL, IMPL_CBLAS, IMPL_THREADED, DEFAULT_IMPL);
+
+    printf("\nImplementations:\n");
+    printf("  %-15s Basic O(n³) triple-nested loop matrix multiplication.\n", IMPL_NAIVE);
+    printf("  %-15s Cache-optimized blocked matrix multiplication using\n", IMPL_SERIAL);
+    printf("  %-15s the specified block size. Requires --block-size.\n", "");
+    printf("  %-15s High-performance BLAS library implementation using\n", IMPL_CBLAS);
+    printf("  %-15s optimized assembly routines (OpenBLAS).\n", "");
+    printf("  %-15s Multi-threaded blocked matrix multiplication using\n", IMPL_THREADED);
+    printf("  %-15s pthreads. Requires --block-size and --number-of-threads.\n", "");
+
+    printf("\nConstraints:\n");
+    printf("  - Matrix size must be positive\n");
+    printf("  - Min value must be ≤ max value\n");
+    printf("  - Block size must evenly divide matrix size\n");
+    printf("  - Number of threads must be ≤ matrix size\n");
+    printf("  - Number of repeats must be > 0\n");
+    printf("  - Serial and threaded implementations require valid block size\n");
+    printf("  - Threaded implementation requires valid number of threads\n");
 
     printf("\nExamples:\n");
-    printf("  %s --matrix-size 1024 --block-size 128\n", program_name);
-    printf("  %s --matrix-size 512 --min-value 10 --max-value 1000\n", program_name);
-    printf("  %s --number-of-threads 8 --matrix-size 2048\n", program_name);
+    printf("  %s --matrix-size 1024 --impl naive\n", program_name);
+    printf("  %s --matrix-size 1024 --block-size 128 --impl serial\n", program_name);
+    printf("  %s --matrix-size 512 --impl cblas --repeats 3\n", program_name);
+    printf("  %s --impl threaded --number-of-threads 8 --block-size 256\n", program_name);
+    printf("  %s --matrix-size 2048 --min-value 1 --max-value 100 --repeats 5\n", program_name);
     printf("  %s --help\n", program_name);
-    
+
     printf("\nNotes:\n");
-    printf("  - Block size must evenly divide the matrix size\n");
+    printf("  - Block size affects cache performance; try powers of 2 (64, 128, 256, 512)\n");
     printf("  - Number of threads should typically match your CPU cores\n");
     printf("  - Larger matrices will show more significant performance differences\n");
+    printf("  - Use repeats > 1 for more accurate timing measurements\n");
+    printf("  - CBLAS implementation is typically the fastest for large matrices\n");
+    printf("  - Threaded implementation may have overhead for small matrices\n");
 }
 
 void panic_unless(bool predicate, const char *fmt, ...)
@@ -134,7 +187,29 @@ void args_validate(args_t *args)
         args->flag_number_of_threads <= args->flag_matrix_size,
         "The number of threads (%d) should be no more than the matrix size (%d)\n",
         args->flag_number_of_threads,
-        args->flag_matrix_size);        
+        args->flag_matrix_size);
+
+    panic_unless(
+        args->flag_repeats > 0,
+        "Number of repeats (%d) must be greater than 0\n",
+        args->flag_repeats);
+
+    panic_unless(
+        strcmp(args->flag_impl, IMPL_NAIVE) == 0 ||
+            strcmp(args->flag_impl, IMPL_SERIAL) == 0 ||
+            strcmp(args->flag_impl, IMPL_CBLAS) == 0 ||
+            strcmp(args->flag_impl, IMPL_THREADED) == 0,
+        "Invalid implementation '%s'. Valid options: %s, %s, %s, %s\n",
+        args->flag_impl, IMPL_NAIVE, IMPL_SERIAL, IMPL_CBLAS, IMPL_THREADED);
+
+    if (strcmp(args->flag_impl, IMPL_SERIAL) == 0 || strcmp(args->flag_impl, IMPL_THREADED) == 0)
+    {
+        panic_unless(
+            args->flag_block_size > 0,
+            "Implementation '%s' requires a valid block size (current: %d)\n",
+            args->flag_impl,
+            args->flag_block_size);
+    }
 }
 
 args_t args_parse(int argc, const char **argv)
@@ -146,6 +221,8 @@ args_t args_parse(int argc, const char **argv)
         .flag_max_value = DEFAULT_MAX_VALUE,
         .flag_block_size = DEFAULT_BLOCK_SIZE,
         .flag_number_of_threads = DEFAULT_NUM_THREADS,
+        .flag_repeats = DEFAULT_REPEATS,
+        .flag_impl = DEFAULT_IMPL,
     };
 
     if (argc == 1)
@@ -185,10 +262,19 @@ args_t args_parse(int argc, const char **argv)
             panic_unless(i + 1 < argc, "The number of threads must be an unsigned integer.\n");
             args.flag_number_of_threads = atoi(argv[i + 1]);
         }
+        else if (strcmp(argv[i], FLAG_REPEATS) == 0)
+        {
+            panic_unless(i + 1 < argc, "Number of repeats must be an unsigned integer.\n");
+            args.flag_repeats = atoi(argv[i + 1]);
+        }
+        else if (strcmp(argv[i], FLAG_IMPL) == 0)
+        {
+            panic_unless(i + 1 < argc, "Implementation must be specified.\n");
+            args.flag_impl = argv[i + 1];
+        }
     }
 
     args_validate(&args);
-
     return args;
 }
 
@@ -407,7 +493,7 @@ void *matrix_mult_worker(void *param)
             const size_t i_end = worker_params->block_end_index;
             const size_t j_end = MIN(bj + block_size, N);
             const size_t k_end = MIN(bk + block_size, N);
-            
+
             for (size_t k = bk; k < k_end; k++)
             {
                 for (size_t i = bi; i < i_end; i++)
@@ -417,7 +503,7 @@ void *matrix_mult_worker(void *param)
                     register double *result_row = &result->data[i * N];
                     register const size_t limit = j_end - ((j_end - bj) % 4);
                     register size_t j;
-                    
+
                     pthread_mutex_lock(result_lock);
                     for (j = bj; j < limit; j += 4)
                     {
@@ -472,8 +558,7 @@ void matrix_mult_threaded(size_t num_threads, size_t block_size, matrix_t *lhs, 
             &threads[i],
             NULL,
             matrix_mult_worker,
-            (void *)&worker_params[i]
-        );
+            (void *)&worker_params[i]);
     }
 
     for (size_t i = 0; i < num_threads; i++)
@@ -546,8 +631,7 @@ long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t
             &threads[i],
             NULL,
             matrix_norm_worker,
-            (void *)&worker_params[i]
-        );
+            (void *)&worker_params[i]);
     }
 
     result = 0;
@@ -564,18 +648,43 @@ long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t
     return result;
 }
 
+void write_result_in_yaml(const char *result_path, benchmark_results_t *results)
+{
+
+}
+
+void benchmark(size_t num_repeats, const char* impl, benchmark_results_t *results)
+{
+    const bool is_naive = strcmp(impl, IMPL_NAIVE) == 0;
+    const bool is_cblas = strcmp(impl, IMPL_CBLAS) == 0;
+    const bool is_serial = strcmp(impl, IMPL_SERIAL) == 0;
+    const bool is_threaded = strcmp(impl, IMPL_THREADED) == 0;
+    size_t i;
+        
+    for (i = 0; i < num_repeats; i++)
+    {
+        if (is_naive)
+        {
+            
+        }
+        else if (is_cblas)        
+        {
+
+        }
+        else if (is_serial)
+        {
+
+        }
+        else if (is_threaded)
+        {
+
+        }
+    }
+}
+
 int main(int argc, const char **argv)
 {
     args_t args = args_parse(argc, argv);
-    matrix_t *A;
-    matrix_t *B;
-    matrix_t *C;
-    matrix_t *D;
-    long double norm_result;
-    double cblas_runtime;
-    double threaded_runtime;
-    double norm_runtime;
-
     srand(time(NULL));
 
     if (args.flag_help)
@@ -584,43 +693,7 @@ int main(int argc, const char **argv)
     }
     else
     {
-        A = matrix_init(args.flag_matrix_size);
-        B = matrix_init(args.flag_matrix_size);
-        C = matrix_init(args.flag_matrix_size);
-        D = matrix_init(args.flag_matrix_size);
-
-        matrix_random(A, args.flag_min_value, args.flag_max_value);
-        matrix_random(B, args.flag_min_value, args.flag_max_value);
-
-        // puts("LHS:");
-        // matrix_println(A);
-
-        // puts("RHS:");
-        // matrix_println(B);
-
-        // puts("Serial result:");
-        BENCHMARK(matrix_mult_cblas(A, B, C), cblas_runtime);
-        printf("cblas_runtime = %f\n", cblas_runtime);
-        // matrix_println(C);
-
-        // puts("Cblas result:");
-        BENCHMARK(matrix_mult_threaded(args.flag_number_of_threads, args.flag_block_size, A, B, D), threaded_runtime);
-        printf("threaded_runtime = %f\n", threaded_runtime);
-        // matrix_println(D);
-
-        panic_unless(matrix_compare(C, D) == 0, "Discrepancy in result!\n");
-
-        BENCHMARK(
-            norm_result = matrix_norm_threaded(args.flag_number_of_threads, args.flag_block_size, D), 
-            norm_runtime
-        );
-        printf("norm result = %Lf\n", norm_result);
-        printf("norm_runtime = %f\n", norm_runtime);
-
-        matrix_destroy(&A);
-        matrix_destroy(&B);
-        matrix_destroy(&C);
-        matrix_destroy(&D);
+        benchmark();
     }
     return 0;
 }
