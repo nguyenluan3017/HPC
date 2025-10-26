@@ -10,7 +10,7 @@
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define BENCHMARK(subroutine, result)                                  \
+#define MEASURE_RUNTIME(subroutine, result)                            \
     {                                                                  \
         struct timespec ts_start;                                      \
         struct timespec ts_end;                                        \
@@ -82,20 +82,16 @@ typedef struct matrix_norm_worker_params_t
     size_t end_index;
 } matrix_norm_worker_params_t;
 
-typedef struct benchmark_results_t
+typedef struct benchmark_result_t
 {
-    double *benchmark_runtimes;
-    double *norm_runtimes;
-    double benchmark_total_runtime;
-    double norm_total_runtime;
-    double benchmark_avg_runtime;
-    double norm_avg_runtime;
-    const char *impl;
-    size_t repeats;
+    double benchmark_runtime;
+    double norm_runtime;
     size_t block_size;
+    size_t num_repeats;
     size_t num_threads;
     size_t matrix_size;
-} benchmark_results_t;
+    const char *impl;
+} benchmark_result_t;
 
 void show_help(const char *program_name)
 {
@@ -606,6 +602,39 @@ void *matrix_norm_worker(void *params)
     pthread_exit(NULL);
 }
 
+long double matrix_norm_serial(size_t block_size, matrix_t *mat)
+{
+    size_t N;
+    double *data;
+    register long double row_sum;
+    register double *row;
+    register size_t j_end;
+    register size_t j;
+    long double max_row_sum;
+    size_t i, bj;
+
+    N = mat->size;
+    data = mat->data;
+    max_row_sum = 0.0;
+
+    for (i = 0; i < N; i++)
+    {
+        row = &data[i * N];
+        row_sum = 0.0;
+        for (bj = 0; bj < N; bj += block_size)
+        {
+            j_end = MIN(bj + block_size, N);
+            for (j = bj; j < j_end; j++)
+            {
+                row_sum += fabsl(row[j]);
+            }
+        }
+        max_row_sum = MAX(max_row_sum, row_sum);
+    }
+
+    return max_row_sum;
+}
+
 long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t *mat)
 {
     const size_t N = mat->size;
@@ -648,43 +677,95 @@ long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t
     return result;
 }
 
-void write_result_in_yaml(const char *result_path, benchmark_results_t *results)
+void write_result_in_yaml(const char *result_path, benchmark_result_t *results)
 {
-
 }
 
-void benchmark(size_t num_repeats, const char* impl, benchmark_results_t *results)
+void benchmark(size_t num_repeats, size_t num_threads, size_t matrix_size, size_t block_size, const char *impl, benchmark_result_t *results)
 {
     const bool is_naive = strcmp(impl, IMPL_NAIVE) == 0;
     const bool is_cblas = strcmp(impl, IMPL_CBLAS) == 0;
     const bool is_serial = strcmp(impl, IMPL_SERIAL) == 0;
     const bool is_threaded = strcmp(impl, IMPL_THREADED) == 0;
+    matrix_t *A, *B, *C, *expected_mult_result;
     size_t i;
-        
-    for (i = 0; i < num_repeats; i++)
+    long double mat_norm;
+
+    A = matrix_init(matrix_size);
+    B = matrix_init(matrix_size);
+    C = matrix_init(matrix_size);
+    expected_mult_result = matrix_init(matrix_size);
+
+    matrix_mult_cblas(A, B, expected_mult_result);
+
+    if (is_naive)
     {
-        if (is_naive)
+        for (i = 0; i < num_repeats; i++)
         {
-            
-        }
-        else if (is_cblas)        
-        {
-
-        }
-        else if (is_serial)
-        {
-
-        }
-        else if (is_threaded)
-        {
-
+            MEASURE_RUNTIME(matrix_mult_naive(A, B, C), results[i].benchmark_runtime);
+            MEASURE_RUNTIME(mat_norm = matrix_norm_serial(block_size, C), results[i].norm_runtime);
+            results[i].block_size = block_size;
+            results[i].impl = impl;
+            results[i].matrix_size = matrix_size;
+            results[i].num_repeats = num_repeats;
+            results[i].num_threads = 1;
         }
     }
+    else if (is_cblas)
+    {
+        for (i = 0; i < num_repeats; i++)
+        {
+            MEASURE_RUNTIME(matrix_mult_cblas(A, B, C), results[i].benchmark_runtime);
+            MEASURE_RUNTIME(mat_norm = matrix_norm_serial(block_size, C), results[i].norm_runtime);
+            results[i].block_size = block_size;
+            results[i].impl = impl;
+            results[i].matrix_size = matrix_size;
+            results[i].num_repeats = num_repeats;
+            results[i].num_threads = 1;
+        }
+    }
+    else if (is_serial)
+    {
+        for (i = 0; i < num_repeats; i++)
+        {
+            MEASURE_RUNTIME(matrix_mult_serial(block_size, A, B, C), results[i].benchmark_runtime);
+            MEASURE_RUNTIME(mat_norm = matrix_norm_serial(block_size, C), results[i].norm_runtime);
+            results[i].block_size = block_size;
+            results[i].impl = impl;
+            results[i].matrix_size = matrix_size;
+            results[i].num_repeats = num_repeats;
+            results[i].num_threads = 1;
+        }
+    }
+    else if (is_threaded)
+    {
+        for (i = 0; i < num_repeats; i++)
+        {
+            MEASURE_RUNTIME(matrix_mult_threaded(num_threads, num_repeats, A, B, C), results[i].benchmark_runtime);
+            MEASURE_RUNTIME(mat_norm = matrix_norm_serial(block_size, C), results[i].norm_runtime);
+            results[i].block_size = block_size;
+            results[i].impl = impl;
+            results[i].matrix_size = matrix_size;
+            results[i].num_repeats = num_repeats;
+            results[i].num_threads = num_threads;
+        }
+    }
+
+    panic_unless(
+        matrix_compare(C, expected_mult_result) == 0,
+        "Discrepency in matrix multiplication results\n");
+
+    matrix_destroy(A);
+    matrix_destroy(B);
+    matrix_destroy(C);
 }
 
 int main(int argc, const char **argv)
 {
-    args_t args = args_parse(argc, argv);
+    args_t args;
+    benchmark_result_t * results;
+
+    args = args_parse(argc, argv);
     srand(time(NULL));
 
     if (args.flag_help)
@@ -693,7 +774,24 @@ int main(int argc, const char **argv)
     }
     else
     {
-        benchmark();
+        results = (benchmark_result_t *)calloc(args.flag_repeats, sizeof(benchmark_result_t));
+        
+        benchmark(
+            args.flag_repeats,
+            args.flag_number_of_threads,
+            args.flag_matrix_size,
+            args.flag_block_size,
+            args.flag_impl,
+            results
+        );
+
+        for (size_t i = 0; i < args.flag_repeats; i++)
+        {
+            printf("Run %zu: Multiplication time: %.6f s, Norm time: %.6f s\n", 
+                   i + 1, results[i].benchmark_runtime, results[i].norm_runtime);
+        }
+
+        free(results);
     }
     return 0;
 }
