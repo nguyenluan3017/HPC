@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall
+CFLAGS_DBG = -O0 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer
 UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S),Linux)
@@ -14,6 +15,10 @@ endif
 norm: norm.c
 	mkdir -p bin/
 	$(CC) $(INCLUDES) $(CFLAGS) norm.c -o ./bin/norm $(LIBS)
+
+norm-dbg: norm.c
+	mkdir -p bin/
+	$(CC) $(INCLUDES) $(CFLAGS) $(CFLAGS_DBG) norm.c -o ./bin/norm $(LIBS)
 
 benchmark: benchmark.go norm
 	go run benchmark.go --output-dir $(shell echo $(OUTPUT_DIR))
