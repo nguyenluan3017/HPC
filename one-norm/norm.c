@@ -678,8 +678,71 @@ long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t
     return result;
 }
 
-void write_result_in_yaml(const char *result_path, benchmark_result_t *results)
+void write_result_in_yaml(FILE *file, size_t num_results, benchmark_result_t *results)
 {
+    size_t i;
+    double avg_benchmark_runtime, avg_norm_runtime;
+    double min_benchmark_runtime, max_benchmark_runtime;
+    double min_norm_runtime, max_norm_runtime;
+
+    panic_unless(file != NULL, "File could not be null");
+
+    avg_benchmark_runtime = 0.0;
+    avg_norm_runtime = 0.0;
+    min_benchmark_runtime = results[0].benchmark_runtime;
+    max_benchmark_runtime = results[0].benchmark_runtime;
+    min_norm_runtime = results[0].norm_runtime;
+    max_norm_runtime = results[0].norm_runtime;
+
+    /* Calculate statistics */
+    for (i = 0; i < num_results; i++)
+    {
+        avg_benchmark_runtime += results[i].benchmark_runtime;
+        avg_norm_runtime += results[i].norm_runtime;
+
+        min_benchmark_runtime = MIN(min_benchmark_runtime, results[i].benchmark_runtime);
+        max_benchmark_runtime = MAX(max_benchmark_runtime, results[i].benchmark_runtime);
+        min_norm_runtime = MIN(min_norm_runtime, results[i].norm_runtime);
+        max_norm_runtime = MAX(max_norm_runtime, results[i].norm_runtime);
+    }
+
+    avg_benchmark_runtime /= num_results;
+    avg_norm_runtime /= num_results;
+
+    /* Write YAML header */
+    fprintf(file, "benchmark_results:\n");
+    fprintf(file, "  metadata:\n");
+    fprintf(file, "    implementation: \"%s\"\n", results[0].impl);
+    fprintf(file, "    matrix_size: %zu\n", results[0].matrix_size);
+    fprintf(file, "    block_size: %zu\n", results[0].block_size);
+    fprintf(file, "    num_threads: %zu\n", results[0].num_threads);
+    fprintf(file, "    num_repeats: %zu\n", results[0].num_repeats);
+    fprintf(file, "    timestamp: %ld\n", time(NULL));
+
+    /* Write statistics */
+    fprintf(file, "  statistics:\n");
+    fprintf(file, "    multiplication:\n");
+    fprintf(file, "      average_time: %.9f\n", avg_benchmark_runtime);
+    fprintf(file, "      min_time: %.9f\n", min_benchmark_runtime);
+    fprintf(file, "      max_time: %.9f\n", max_benchmark_runtime);
+    fprintf(file, "    norm_computation:\n");
+    fprintf(file, "      average_time: %.9f\n", avg_norm_runtime);
+    fprintf(file, "      min_time: %.9f\n", min_norm_runtime);
+    fprintf(file, "      max_time: %.9f\n", max_norm_runtime);
+    fprintf(file, "    total:\n");
+    fprintf(file, "      average_time: %.9f\n", avg_benchmark_runtime + avg_norm_runtime);
+    fprintf(file, "      min_time: %.9f\n", min_benchmark_runtime + min_norm_runtime);
+    fprintf(file, "      max_time: %.9f\n", max_benchmark_runtime + max_norm_runtime);
+
+    /* Write individual run results */
+    fprintf(file, "  individual_runs:\n");
+    for (i = 0; i < num_results; i++)
+    {
+        fprintf(file, "    - run: %zu\n", i + 1);
+        fprintf(file, "      multiplication_time: %.9f\n", results[i].benchmark_runtime);
+        fprintf(file, "      norm_time: %.9f\n", results[i].norm_runtime);
+        fprintf(file, "      total_time: %.9f\n", results[i].benchmark_runtime + results[i].norm_runtime);
+    }
 }
 
 void benchmark(size_t num_repeats, size_t num_threads, size_t matrix_size, size_t block_size, int min_value, int max_value, const char *impl, benchmark_result_t *results)
@@ -807,6 +870,8 @@ int main(int argc, const char **argv)
             args->flag_max_value,
             args->flag_impl,
             results);
+
+        write_result_in_yaml(stdout, args->flag_repeats, results);
 
         free(results);
     }
