@@ -8,20 +8,6 @@
 #include <math.h>
 #include <time.h>
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MEASURE_RUNTIME(subroutine, result)                            \
-    {                                                                  \
-        struct timespec ts_start;                                      \
-        struct timespec ts_end;                                        \
-        clock_gettime(CLOCK_MONOTONIC, &ts_start);                     \
-        double start_time = ts_start.tv_sec + ts_start.tv_nsec * 1e-9; \
-        subroutine;                                                    \
-        clock_gettime(CLOCK_MONOTONIC, &ts_end);                       \
-        double end_time = ts_end.tv_sec + ts_end.tv_nsec * 1e-9;       \
-        result = end_time - start_time;                                \
-    }
-
 #define FLAG_HELP "--help"
 #define FLAG_MATRIX_SIZE "--matrix-size"
 #define FLAG_MIN_VALUE "--min-value"
@@ -36,6 +22,7 @@
 #define IMPL_CBLAS "cblas"
 #define IMPL_THREADED "threaded"
 
+#define EPS 1e-9
 #define DEFAULT_MATRIX_SIZE 1024
 #define DEFAULT_MIN_VALUE 1
 #define DEFAULT_MAX_VALUE 1000
@@ -43,6 +30,20 @@
 #define DEFAULT_NUM_THREADS 4
 #define DEFAULT_REPEATS 1
 #define DEFAULT_IMPL IMPL_CBLAS
+
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MEASURE_RUNTIME(subroutine, result)                            \
+    {                                                                  \
+        struct timespec ts_start;                                      \
+        struct timespec ts_end;                                        \
+        clock_gettime(CLOCK_MONOTONIC, &ts_start);                     \
+        double start_time = ts_start.tv_sec + ts_start.tv_nsec * 1e-9; \
+        subroutine;                                                    \
+        clock_gettime(CLOCK_MONOTONIC, &ts_end);                       \
+        double end_time = ts_end.tv_sec + ts_end.tv_nsec * 1e-9;       \
+        result = end_time - start_time;                                \
+    }
 
 typedef struct args_t
 {
@@ -208,69 +209,70 @@ void args_validate(args_t *args)
     }
 }
 
-args_t args_parse(int argc, const char **argv)
+args_t *args_parse(int argc, const char **argv)
 {
-    args_t args = {
-        .flag_help = false,
-        .flag_matrix_size = DEFAULT_MATRIX_SIZE,
-        .flag_min_value = DEFAULT_MIN_VALUE,
-        .flag_max_value = DEFAULT_MAX_VALUE,
-        .flag_block_size = DEFAULT_BLOCK_SIZE,
-        .flag_number_of_threads = DEFAULT_NUM_THREADS,
-        .flag_repeats = DEFAULT_REPEATS,
-        .flag_impl = DEFAULT_IMPL,
-    };
+    args_t *args;
+
+    args = (args_t *)calloc(1, sizeof(args_t));
+    args->flag_help = false;
+    args->flag_matrix_size = DEFAULT_MATRIX_SIZE;
+    args->flag_min_value = DEFAULT_MIN_VALUE;
+    args->flag_max_value = DEFAULT_MAX_VALUE;
+    args->flag_block_size = DEFAULT_BLOCK_SIZE;
+    args->flag_number_of_threads = DEFAULT_NUM_THREADS;
+    args->flag_repeats = DEFAULT_REPEATS;
+    args->flag_impl = DEFAULT_IMPL;
 
     if (argc == 1)
     {
-        args.flag_help = true;
+        args->flag_help = true;
     }
 
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], FLAG_HELP) == 0)
         {
-            args.flag_help = true;
+            args->flag_help = true;
             break;
         }
         else if (strcmp(argv[i], FLAG_MATRIX_SIZE) == 0)
         {
             panic_unless(i + 1 < argc, "Matrix size should be an unsigned integer.\n");
-            args.flag_matrix_size = atoi(argv[i + 1]);
+            args->flag_matrix_size = atoi(argv[i + 1]);
         }
         else if (strcmp(argv[i], FLAG_MIN_VALUE) == 0)
         {
             panic_unless(i + 1 < argc, "Min value must be an integer.\n");
-            args.flag_min_value = atoi(argv[i + 1]);
+            args->flag_min_value = atoi(argv[i + 1]);
         }
         else if (strcmp(argv[i], FLAG_MAX_VALUE) == 0)
         {
             panic_unless(i + 1 < argc, "Max value must be an integer.\n");
-            args.flag_max_value = atoi(argv[i + 1]);
+            args->flag_max_value = atoi(argv[i + 1]);
         }
         else if (strcmp(argv[i], FLAG_BLOCK_SIZE) == 0)
         {
             panic_unless(i + 1 < argc, "Block size must be an integer.\n");
-            args.flag_block_size = atoi(argv[i + 1]);
+            args->flag_block_size = atoi(argv[i + 1]);
         }
         else if (strcmp(argv[i], FLAG_NUMBER_OF_THREADS) == 0)
         {
             panic_unless(i + 1 < argc, "The number of threads must be an unsigned integer.\n");
-            args.flag_number_of_threads = atoi(argv[i + 1]);
+            args->flag_number_of_threads = atoi(argv[i + 1]);
         }
         else if (strcmp(argv[i], FLAG_REPEATS) == 0)
         {
             panic_unless(i + 1 < argc, "Number of repeats must be an unsigned integer.\n");
-            args.flag_repeats = atoi(argv[i + 1]);
+            args->flag_repeats = atoi(argv[i + 1]);
         }
         else if (strcmp(argv[i], FLAG_IMPL) == 0)
         {
             panic_unless(i + 1 < argc, "Implementation must be specified.\n");
-            args.flag_impl = argv[i + 1];
+            args->flag_impl = argv[i + 1];
         }
     }
 
-    args_validate(&args);
+    args_validate(args);
     return args;
 }
 
@@ -304,7 +306,6 @@ void matrix_random(matrix_t *mat, int min_value, int max_value)
 int matrix_compare(matrix_t *lhs, matrix_t *rhs)
 {
     const size_t N = lhs->size;
-    const double EPS = 1e-9;
 
     panic_unless(
         lhs->size == rhs->size,
@@ -681,7 +682,7 @@ void write_result_in_yaml(const char *result_path, benchmark_result_t *results)
 {
 }
 
-void benchmark(size_t num_repeats, size_t num_threads, size_t matrix_size, size_t block_size, const char *impl, benchmark_result_t *results)
+void benchmark(size_t num_repeats, size_t num_threads, size_t matrix_size, size_t block_size, int min_value, int max_value, const char *impl, benchmark_result_t *results)
 {
     const bool is_naive = strcmp(impl, IMPL_NAIVE) == 0;
     const bool is_cblas = strcmp(impl, IMPL_CBLAS) == 0;
@@ -689,14 +690,20 @@ void benchmark(size_t num_repeats, size_t num_threads, size_t matrix_size, size_
     const bool is_threaded = strcmp(impl, IMPL_THREADED) == 0;
     matrix_t *A, *B, *C, *expected_mult_result;
     size_t i;
-    long double mat_norm;
+    long double mat_norm, expected_norm;
 
     A = matrix_init(matrix_size);
     B = matrix_init(matrix_size);
     C = matrix_init(matrix_size);
     expected_mult_result = matrix_init(matrix_size);
 
+    matrix_random(A, min_value, max_value);
+    matrix_random(B, min_value, max_value);
+
     matrix_mult_cblas(A, B, expected_mult_result);
+
+    mat_norm = 0.0;
+    expected_norm = 0.0;
 
     if (is_naive)
     {
@@ -741,8 +748,8 @@ void benchmark(size_t num_repeats, size_t num_threads, size_t matrix_size, size_
     {
         for (i = 0; i < num_repeats; i++)
         {
-            MEASURE_RUNTIME(matrix_mult_threaded(num_threads, num_repeats, A, B, C), results[i].benchmark_runtime);
-            MEASURE_RUNTIME(mat_norm = matrix_norm_serial(block_size, C), results[i].norm_runtime);
+            MEASURE_RUNTIME(matrix_mult_threaded(num_threads, block_size, A, B, C), results[i].benchmark_runtime);
+            MEASURE_RUNTIME(mat_norm = matrix_norm_threaded(num_threads, block_size, C), results[i].norm_runtime);
             results[i].block_size = block_size;
             results[i].impl = impl;
             results[i].matrix_size = matrix_size;
@@ -755,37 +762,55 @@ void benchmark(size_t num_repeats, size_t num_threads, size_t matrix_size, size_
         matrix_compare(C, expected_mult_result) == 0,
         "Discrepency in matrix multiplication results\n");
 
-    matrix_destroy(A);
-    matrix_destroy(B);
-    matrix_destroy(C);
+    if (is_threaded)
+    {
+        expected_norm = matrix_norm_serial(block_size, expected_mult_result);
+    }
+    else
+    {
+        expected_norm = matrix_norm_threaded(num_threads, block_size, expected_mult_result);
+    }
+    panic_unless(
+        fabsl(expected_norm - mat_norm) < EPS,
+        "Incorrect matrix norm estimation (expected: %Lf, actual: %Lf).",
+        expected_norm,
+        mat_norm
+    );
+
+    matrix_destroy(&A);
+    matrix_destroy(&B);
+    matrix_destroy(&C);
+    matrix_destroy(&expected_mult_result);
 }
 
 int main(int argc, const char **argv)
 {
-    args_t args;
-    benchmark_result_t * results;
+    args_t *args;
+    benchmark_result_t *results;
 
     args = args_parse(argc, argv);
     srand(time(NULL));
 
-    if (args.flag_help)
+    if (args->flag_help)
     {
         show_help(argv[0]);
     }
     else
     {
-        results = (benchmark_result_t *)calloc(args.flag_repeats, sizeof(benchmark_result_t));
+        results = (benchmark_result_t *)calloc(args->flag_repeats, sizeof(benchmark_result_t));
         
         benchmark(
-            args.flag_repeats,
-            args.flag_number_of_threads,
-            args.flag_matrix_size,
-            args.flag_block_size,
-            args.flag_impl,
+            args->flag_repeats,
+            args->flag_number_of_threads,
+            args->flag_matrix_size,
+            args->flag_block_size,
+            args->flag_min_value,
+            args->flag_max_value,
+            args->flag_impl,
             results
         );
 
-        for (size_t i = 0; i < args.flag_repeats; i++)
+        for (size_t i = 0; i < args->flag_repeats; i++)
         {
             printf("Run %zu: Multiplication time: %.6f s, Norm time: %.6f s\n", 
                    i + 1, results[i].benchmark_runtime, results[i].norm_runtime);
@@ -793,5 +818,7 @@ int main(int argc, const char **argv)
 
         free(results);
     }
+
+    free(args);
     return 0;
 }
