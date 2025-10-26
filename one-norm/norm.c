@@ -774,8 +774,7 @@ void benchmark(size_t num_repeats, size_t num_threads, size_t matrix_size, size_
         fabsl(expected_norm - mat_norm) < EPS,
         "Incorrect matrix norm estimation (expected: %Lf, actual: %Lf).",
         expected_norm,
-        mat_norm
-    );
+        mat_norm);
 
     matrix_destroy(&A);
     matrix_destroy(&B);
@@ -798,7 +797,7 @@ int main(int argc, const char **argv)
     else
     {
         results = (benchmark_result_t *)calloc(args->flag_repeats, sizeof(benchmark_result_t));
-        
+
         benchmark(
             args->flag_repeats,
             args->flag_number_of_threads,
@@ -807,14 +806,7 @@ int main(int argc, const char **argv)
             args->flag_min_value,
             args->flag_max_value,
             args->flag_impl,
-            results
-        );
-
-        for (size_t i = 0; i < args->flag_repeats; i++)
-        {
-            printf("Run %zu: Multiplication time: %.6f s, Norm time: %.6f s\n", 
-                   i + 1, results[i].benchmark_runtime, results[i].norm_runtime);
-        }
+            results);
 
         free(results);
     }
