@@ -31,6 +31,26 @@ type TestConfig struct {
 	done               chan<- bool
 }
 
+func parseSize(sizeStr, unitStr string) (uint, error) {
+	size, err := strconv.ParseInt(sizeStr, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	switch {
+	case strings.HasPrefix(unitStr, "K"):
+		return uint(size * 1024), nil
+	case strings.HasPrefix(unitStr, "M"):
+		return uint(size * 1024 * 1024), nil
+	case strings.HasPrefix(unitStr, "G"):
+		return uint(size * 1024 * 1024 * 1024), nil
+	case strings.HasPrefix(unitStr, "B"):
+		return uint(size), nil
+	default:
+		return uint(size), nil
+	}
+}
+
 func getCPUInfo() CPUInfo {
 	var info CPUInfo
 
@@ -68,13 +88,38 @@ func getCPUInfo() CPUInfo {
 				for _, line := range lines {
 					if strings.Contains(line, "CPU(s):") && !strings.Contains(line, "NUMA") {
 						parts := strings.Fields(line)
-						fmt.Println(parts)
+						size, err := strconv.ParseInt(parts[1], 10, 8 * 8)
+						if err != nil {
+							panic(err)
+						}
+						info.logicalCores = uint(size)
 					} else if strings.Contains(line, "L1d cache:") {
-
+						parts := strings.Fields(line)
+						if len(parts) >= 4 {
+							size, err := parseSize(parts[2], parts[3])
+							if err != nil {
+								panic(err)
+							}
+							info.l1dCache = size
+						}
 					} else if strings.Contains(line, "L2 cache:") {
-
+						parts := strings.Fields(line)
+						if len(parts) >= 4 {
+							size, err := parseSize(parts[2], parts[3])
+							if err != nil {
+								panic(err)
+							}
+							info.l2Cache = size
+						}
 					} else if strings.Contains(line, "L3 cache:") {
-
+						parts := strings.Fields(line)
+						if len(parts) >= 4 {
+							size, err := parseSize(parts[2], parts[3])
+							if err != nil {
+								panic(err)
+							}
+							info.l3Cache = size
+						}
 					}
 				}
 			}
@@ -139,9 +184,7 @@ func main() {
 	done := make(chan bool)	
 	execPath := flag.String("exec", "./bin/norm", "Path to exectuable to benchmark")
 	outputDir := flag.String("output-dir", "/tmp", "Output directory for benchmark results")
-	numberOfThreads := sysinfo.logicalCores / 2	
-
-	flag.Parse()
+	numberOfThreads := sysinfo.logicalCores
 
 	threadedOutputFile, err := os.OpenFile(*outputDir + "/threaded_results.yaml", os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
 	if err != nil {

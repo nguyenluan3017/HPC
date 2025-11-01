@@ -129,7 +129,7 @@ void show_help(const char *program_name)
     printf("  - Matrix size must be positive\n");
     printf("  - Min value must be ≤ max value\n");
     printf("  - Block size must evenly divide matrix size\n");
-    printf("  - Number of threads must be ≤ matrix size\n");
+    printf("  - Number of threads must be ≥ 1 and ≤ matrix size\n");  // Updated line
     printf("  - Number of repeats must be > 0\n");
     printf("  - Serial and threaded implementations require valid block size\n");
     printf("  - Threaded implementation requires valid number of threads\n");
@@ -178,6 +178,11 @@ void args_validate(args_t *args)
         "Block size (%d) must divide matrix size (%d).\n",
         args->flag_block_size,
         args->flag_matrix_size);
+
+    panic_unless(
+        args->flag_number_of_threads >= 1,
+        "The number of threads (%d) must be at least 1\n",
+        args->flag_number_of_threads);
 
     panic_unless(
         args->flag_number_of_threads <= args->flag_matrix_size,
