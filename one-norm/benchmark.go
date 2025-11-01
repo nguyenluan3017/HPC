@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"math"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,23 +13,26 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v3"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/plotutil"
 	"gonum.org/v1/plot/vg"
+	"gopkg.in/yaml.v3"
 )
 
 const (
 	IMPL_THREADED = "threaded"
 	IMPL_SERIAL   = "serial"
+
+	SERIAL_RESULTS_FILE   = "serial.yaml"
+	THREADED_RESULTS_FILE = "threaded.yaml"
 )
 
 type BenchmarkFlags struct {
 	execPath       *string
 	outputDir      *string
-	resultsPath     *string
-	imageDirPath      *string
+	resultsPath    *string
+	imageDirPath   *string
 	enablePlotting *bool
 	verbose        *bool
 	help           *bool
@@ -92,7 +95,7 @@ func (options *BenchmarkFlags) parse() {
 	options.execPath = flag.String("exec", "./bin/norm",
 		"Path to executable to benchmark")
 
-	options.outputDir = flag.String("output-dir", "./results",
+	options.outputDir = flag.String("output-dir", "./out",
 		"Output directory for benchmark results")
 
 	options.resultsPath = flag.String("results-path", "./results",
@@ -289,10 +292,10 @@ func ensureOutputFile(path string) *os.File {
 }
 
 func benchmark(blockSize uint, numberOfThreads uint, numberOfIterations uint, execPath string, outputDir string, done chan<- bool) {
-	threadedOutputFile := ensureOutputFile(outputDir + "/threaded_results.yaml")
+	threadedOutputFile := ensureOutputFile(outputDir + "/" + THREADED_RESULTS_FILE)
 	defer threadedOutputFile.Close()
 
-	serialOutputFile := ensureOutputFile(outputDir + "/serial_results.yaml")
+	serialOutputFile := ensureOutputFile(outputDir + "/" + SERIAL_RESULTS_FILE)
 	defer serialOutputFile.Close()
 
 	go runThreadedTest(TestConfiguration{
@@ -335,61 +338,61 @@ func readBenchmarkResults(resultPath string) (BenchmarkResults, error) {
 }
 
 func plotRuntimeDependenceOnMatricSize(serialResults BenchmarkResults, threadedResults BenchmarkResults, imageDirPath string) {
-    p := plot.New()
-    p.Title.Text = "Runtime vs Matrix Size"
-    p.X.Label.Text = "Matrix Size"
-    p.Y.Label.Text = "Average Execution Time (seconds)"
+	p := plot.New()
+	p.Title.Text = "Runtime vs Matrix Size"
+	p.X.Label.Text = "Matrix Size"
+	p.Y.Label.Text = "Average Execution Time (seconds)"
 
-    // Convert serial results to plot points
-    serialPts := make(plotter.XYs, len(serialResults))
-    for i, result := range serialResults {
-        serialPts[i].X = float64(result.Metadata.MatrixSize)
-        serialPts[i].Y = result.Stats.Total.AvgTime
-    }
+	// Convert serial results to plot points
+	serialPts := make(plotter.XYs, len(serialResults))
+	for i, result := range serialResults {
+		serialPts[i].X = float64(result.Metadata.MatrixSize)
+		serialPts[i].Y = result.Stats.Total.AvgTime
+	}
 
-    // Convert threaded results to plot points
-    threadedPts := make(plotter.XYs, len(threadedResults))
-    for i, result := range threadedResults {
-        threadedPts[i].X = float64(result.Metadata.MatrixSize)
-        threadedPts[i].Y = result.Stats.Total.AvgTime
-    }
+	// Convert threaded results to plot points
+	threadedPts := make(plotter.XYs, len(threadedResults))
+	for i, result := range threadedResults {
+		threadedPts[i].X = float64(result.Metadata.MatrixSize)
+		threadedPts[i].Y = result.Stats.Total.AvgTime
+	}
 
-    // Add lines to plot
-    err := plotutil.AddLinePoints(p,
-        "Serial", serialPts,
-        "Threaded", threadedPts)
-    if err != nil {
-        log.Fatal(err)
-    }
+	// Add lines to plot
+	err := plotutil.AddLinePoints(p,
+		"Serial", serialPts,
+		"Threaded", threadedPts)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    // Create the full path for the image file
-    imagePath := filepath.Join(imageDirPath, "runtime_vs_matrix_size.png")
-    
-    // Save the plot
-    if err := p.Save(10*vg.Inch, 6*vg.Inch, imagePath); err != nil {
-        log.Fatal(err)
-    }
+	// Create the full path for the image file
+	imagePath := filepath.Join(imageDirPath, "runtime_vs_matrix_size.png")
+
+	// Save the plot
+	if err := p.Save(10*vg.Inch, 6*vg.Inch, imagePath); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func plotResults(serialResultsPath string, threadedResultsPath string, imageDirPath string) {
-    serialResults, err := readBenchmarkResults(serialResultsPath)
-    if err != nil {
-        panic(err)
-    }
+	serialResults, err := readBenchmarkResults(serialResultsPath)
+	if err != nil {
+		panic(err)
+	}
 
-    threadedResults, err := readBenchmarkResults(threadedResultsPath)
-    if err != nil {
-        panic(err)
-    }	
+	threadedResults, err := readBenchmarkResults(threadedResultsPath)
+	if err != nil {
+		panic(err)
+	}
 
-    // Ensure the image directory exists
-    os.MkdirAll(imageDirPath, 0755)
+	// Ensure the image directory exists
+	os.MkdirAll(imageDirPath, 0755)
 
-    plotRuntimeDependenceOnMatricSize(
-        serialResults, 
-        threadedResults,
-        imageDirPath,
-    )
+	plotRuntimeDependenceOnMatricSize(
+		serialResults,
+		threadedResults,
+		imageDirPath,
+	)
 }
 
 func main() {
@@ -417,14 +420,15 @@ func main() {
 			fmt.Printf("Creating plots from results in: %s\n", *flags.resultsPath)
 		}
 		plotResults(
-			filepath.Join(*flags.resultsPath, "serial.yaml"),
-			filepath.Join(*flags.resultsPath, "threaded.yaml"),
+			filepath.Join(*flags.resultsPath, SERIAL_RESULTS_FILE),
+			filepath.Join(*flags.resultsPath, THREADED_RESULTS_FILE),
 			*flags.imageDirPath,
 		)
 	} else {
 		if *flags.verbose {
 			fmt.Println("Starting benchmark execution...")
 		}
+
 		benchmark(
 			blockSize,
 			sysinfo.logicalCores,
