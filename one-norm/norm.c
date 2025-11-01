@@ -67,11 +67,10 @@ typedef struct matrix_mult_worker_params_t
 {
     matrix_t *lhs;
     matrix_t *rhs;
-    matrix_t *result;
+    double *result;
     size_t block_start_index;
     size_t block_end_index;
     size_t block_size;
-    pthread_mutex_t *mutex;
 } matrix_mult_worker_params_t;
 
 typedef struct matrix_norm_worker_params_t
@@ -485,10 +484,9 @@ void matrix_mult_cblas(matrix_t *lhs, matrix_t *rhs, matrix_t *result)
 void *matrix_mult_worker(void *param)
 {
     matrix_mult_worker_params_t *worker_params = (matrix_mult_worker_params_t *)param;
-    pthread_mutex_t *result_lock = worker_params->mutex;
     matrix_t *lhs = worker_params->lhs;
     matrix_t *rhs = worker_params->rhs;
-    matrix_t *result = worker_params->result;
+    double *result = worker_params->result;
     const size_t N = lhs->size;
     const size_t block_size = worker_params->block_size;
     const size_t bi = worker_params->block_start_index;
@@ -507,11 +505,10 @@ void *matrix_mult_worker(void *param)
                 {
                     register const double lhs_data = lhs->data[i * N + k];
                     register double *rhs_row = &rhs->data[k * N];
-                    register double *result_row = &result->data[i * N];
+                    register double *result_row = &result[i * N];
                     register const size_t limit = j_end - ((j_end - bj) % 4);
                     register size_t j;
 
-                    pthread_mutex_lock(result_lock);
                     for (j = bj; j < limit; j += 4)
                     {
                         result_row[j] += lhs_data * rhs_row[j];
@@ -524,7 +521,6 @@ void *matrix_mult_worker(void *param)
                     {
                         result_row[j] += lhs_data * rhs_row[j];
                     }
-                    pthread_mutex_unlock(result_lock);
                 }
             }
         }
@@ -561,11 +557,10 @@ void matrix_mult_threaded(size_t num_threads, size_t block_size, matrix_t *lhs, 
     {
         worker_params[i].lhs = lhs;
         worker_params[i].rhs = rhs;
-        worker_params[i].result = result;
+        worker_params[i].result = (double *)calloc(N * N, sizeof(double));
         worker_params[i].block_start_index = i * PARTITION_SIZE;
         worker_params[i].block_end_index = MIN((i + 1) * PARTITION_SIZE, N);
-        worker_params[i].mutex = mutex;
-        worker_params[i].block_size = block_size;
+        worker_params[i].block_size = block_size;        
 
         pthread_create(
             &threads[i],
@@ -577,6 +572,12 @@ void matrix_mult_threaded(size_t num_threads, size_t block_size, matrix_t *lhs, 
     for (size_t i = 0; i < num_threads; i++)
     {
         pthread_join(threads[i], NULL);
+        for (size_t j = 0; j < N * N; j++)
+        {
+            result->data[j] += worker_params[i].result[j];
+        }
+        free(worker_params[i].result);
+        worker_params[i].result = NULL;
     }
 
     free(threads);
