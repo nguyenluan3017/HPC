@@ -3,13 +3,20 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"math"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/plotutil"
+	"gonum.org/v1/plot/vg"
 )
 
 const (
@@ -30,7 +37,7 @@ type TestConfiguration struct {
 	numberOfIterations uint
 	execPath           string
 	outputFile         *os.File
-	done               chan<- bool
+	done               chan<-bool
 }
 
 func parseSize(sizeStr, unitStr string) (uint, error) {
