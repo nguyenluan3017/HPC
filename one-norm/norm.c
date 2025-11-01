@@ -732,7 +732,7 @@ void write_result_in_yaml(FILE *file, size_t num_results, benchmark_result_t *re
     avg_norm_runtime /= num_results;
 
     /* Write YAML header */
-    fprintf(file, "benchmark_results:\n");
+    fprintf(file, "- benchmark_results:\n");
     fprintf(file, "  metadata:\n");
     fprintf(file, "    implementation: \"%s\"\n", results[0].impl);
     fprintf(file, "    matrix_size: %zu\n", results[0].matrix_size);

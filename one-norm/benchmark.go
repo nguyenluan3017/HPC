@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -22,7 +24,7 @@ type CPUInfo struct {
 	l3Cache      uint
 }
 
-type TestConfig struct {
+type TestConfiguration struct {
 	blockSize          uint
 	numberOfThreads    *uint
 	numberOfIterations uint
@@ -49,6 +51,15 @@ func parseSize(sizeStr, unitStr string) (uint, error) {
 	default:
 		return uint(size), nil
 	}
+}
+
+func (info CPUInfo) getOptimalBlockSize() uint {
+	if maxCacheSize := max(info.l3Cache, info.l2Cache, info.l1dCache); maxCacheSize > 0 {
+		blockSizeSquared := float64(maxCacheSize) / float64(3 * 8)
+		return uint(math.Sqrt(blockSizeSquared))
+	}
+
+	return 512
 }
 
 func getCPUInfo() CPUInfo {
@@ -147,7 +158,7 @@ func runNorm(matrixSize uint, blockSize uint, numberOfThreads uint, numberOfIter
 	threadedCmd.Run()
 }
 
-func runThreadedTest(testConfig TestConfig) {
+func runThreadedTest(testConfig TestConfiguration) {
 	for matrixSize := uint(1024); matrixSize <= 4096; matrixSize += 512 {
 		runNorm(
 			matrixSize,
@@ -162,7 +173,7 @@ func runThreadedTest(testConfig TestConfig) {
 	testConfig.done <- true
 }
 
-func runSerialTest(testConfig TestConfig) {
+func runSerialTest(testConfig TestConfiguration) {
 	for matrixSize := uint(1024); matrixSize <= 4096; matrixSize += 512 {
 		runNorm(
 			matrixSize,
@@ -177,10 +188,25 @@ func runSerialTest(testConfig TestConfig) {
 	testConfig.done <- true
 }
 
+func ensureOutputFile(path string) *os.File {
+	if _, err := os.Stat(path); err == nil {
+		os.Remove(path)
+	}
+
+	parent := filepath.Dir(path)
+	os.MkdirAll(parent, 0755)
+
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
 func main() {
-	const blockSize = 512
-	const numberOfIterations = 1
+	const numberOfIterations = uint(50)
 	sysinfo := getCPUInfo()
+	blockSize := uint(512)
 	done := make(chan bool)
 	numberOfThreads := sysinfo.logicalCores
 
@@ -188,19 +214,13 @@ func main() {
 	outputDir := flag.String("output-dir", "/tmp", "Output directory for benchmark results")
 	flag.Parse()
 
-	threadedOutputFile, err := os.OpenFile(*outputDir+"/threaded_results.yaml", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
+	threadedOutputFile := ensureOutputFile(*outputDir+"/threaded_results.yaml")
 	defer threadedOutputFile.Close()
 
-	serialOutputFile, err := os.OpenFile(*outputDir+"/serial_results.yaml", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
+	serialOutputFile := ensureOutputFile(*outputDir+"/serial_results.yaml")
 	defer serialOutputFile.Close()
 
-	go runThreadedTest(TestConfig{
+	go runThreadedTest(TestConfiguration{
 		blockSize:          blockSize,
 		numberOfThreads:    &numberOfThreads,
 		numberOfIterations: numberOfIterations,
@@ -209,9 +229,7 @@ func main() {
 		outputFile:         threadedOutputFile,
 	})
 
-	<-done
-
-	go runSerialTest(TestConfig{
+	go runSerialTest(TestConfiguration{
 		blockSize:          blockSize,
 		numberOfIterations: numberOfIterations,
 		execPath:           *execPath,
@@ -219,5 +237,6 @@ func main() {
 		outputFile:         serialOutputFile,
 	})
 
+	<-done
 	<-done
 }
