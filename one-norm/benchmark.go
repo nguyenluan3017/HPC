@@ -3,26 +3,28 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"math"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
-
-	"gonum.org/v1/plot"
-	"gonum.org/v1/plot/plotter"
-	"gonum.org/v1/plot/plotutil"
-	"gonum.org/v1/plot/vg"
 )
 
 const (
 	IMPL_THREADED = "threaded"
 	IMPL_SERIAL   = "serial"
 )
+
+type BenchmarkFlags struct {
+	execPath       *string
+	outputDir      *string
+	resultPath     *string
+	enablePlotting *bool
+	verbose        *bool
+	help          *bool
+}
 
 type CPUInfo struct {
 	logicalCores uint
@@ -38,6 +40,34 @@ type TestConfiguration struct {
 	execPath           string
 	outputFile         *os.File
 	done               chan<-bool
+}
+
+func (options *BenchmarkFlags) parse() {
+	// Initialize the flag pointers
+	options.execPath = flag.String("exec", "./bin/norm", 
+		"Path to executable to benchmark")
+	
+	options.outputDir = flag.String("output-dir", "./results", 
+		"Output directory for benchmark results")
+	
+	options.resultPath = flag.String("result-path", "./results", 
+		"Path to existing benchmark results for plotting (used with -plot flag)")
+	
+	options.enablePlotting = flag.Bool("plot", false, 
+		"Enable plotting mode - creates charts from existing results instead of running benchmarks")
+	
+	options.verbose = flag.Bool("v", false, 
+		"Enable verbose output during benchmarking")
+	
+	options.help = flag.Bool("help", false, 
+		"Show this help message and exit")
+	
+	flag.Parse()
+
+	if *options.help {
+		flag.Usage()
+		os.Exit(0)
+	}
 }
 
 func parseSize(sizeStr, unitStr string) (uint, error) {
@@ -210,28 +240,18 @@ func ensureOutputFile(path string) *os.File {
 	return f
 }
 
-func main() {
-	const numberOfIterations = uint(50)
-	sysinfo := getCPUInfo()
-	blockSize := uint(512)
-	done := make(chan bool)
-	numberOfThreads := sysinfo.logicalCores
-
-	execPath := flag.String("exec", "./bin/norm", "Path to exectuable to benchmark")
-	outputDir := flag.String("output-dir", "/tmp", "Output directory for benchmark results")
-	flag.Parse()
-
-	threadedOutputFile := ensureOutputFile(*outputDir+"/threaded_results.yaml")
+func benchmark(blockSize uint, numberOfThreads uint, numberOfIterations uint, execPath string, outputDir string, done chan<- bool) {
+	threadedOutputFile := ensureOutputFile(outputDir+"/threaded_results.yaml")
 	defer threadedOutputFile.Close()
 
-	serialOutputFile := ensureOutputFile(*outputDir+"/serial_results.yaml")
+	serialOutputFile := ensureOutputFile(outputDir+"/serial_results.yaml")
 	defer serialOutputFile.Close()
 
 	go runThreadedTest(TestConfiguration{
 		blockSize:          blockSize,
 		numberOfThreads:    &numberOfThreads,
 		numberOfIterations: numberOfIterations,
-		execPath:           *execPath,
+		execPath:           execPath,
 		done:               done,
 		outputFile:         threadedOutputFile,
 	})
@@ -239,11 +259,56 @@ func main() {
 	go runSerialTest(TestConfiguration{
 		blockSize:          blockSize,
 		numberOfIterations: numberOfIterations,
-		execPath:           *execPath,
+		execPath:           execPath,
 		done:               done,
 		outputFile:         serialOutputFile,
 	})
+}
 
-	<-done
-	<-done
+func plotResults() {
+
+}
+
+func main() {
+	const numberOfIterations = uint(50)
+	sysinfo := getCPUInfo()
+	const blockSize = uint(512)
+	done := make(chan bool)
+	
+	// Create and parse flags
+	flags := &BenchmarkFlags{}
+	flags.parse()
+
+	if *flags.verbose {
+		fmt.Printf("CPU Info: %d cores, L1d: %d KB, L2: %d KB, L3: %d KB\n",
+			sysinfo.logicalCores, sysinfo.l1dCache/1024, sysinfo.l2Cache/1024, sysinfo.l3Cache/1024)
+		fmt.Printf("Using executable: %s\n", *flags.execPath)
+		fmt.Printf("Output directory: %s\n", *flags.outputDir)
+	}
+
+	if *flags.enablePlotting {
+		if *flags.verbose {
+			fmt.Printf("Creating plots from results in: %s\n", *flags.resultPath)
+		}
+		plotResults()
+	} else {
+		if *flags.verbose {
+			fmt.Println("Starting benchmark execution...")
+		}
+		benchmark(
+			blockSize,
+			sysinfo.logicalCores,
+			numberOfIterations,
+			*flags.execPath,
+			*flags.outputDir,
+			done,
+		)
+		
+		<-done
+		<-done
+		
+		if *flags.verbose {
+			fmt.Println("Benchmark completed!")
+		}
+	}
 }

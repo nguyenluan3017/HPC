@@ -20,9 +20,15 @@ bin/benchmark: benchmark.go
 	go build -o bin/benchmark benchmark.go
 
 benchmark: bin/benchmark bin/norm
+	mkdir -p ./out
 	./bin/benchmark \
-		-output-dir $(shell echo $(OUTPUT_DIR)) \
+		-output-dir ./out \
 		-exec ./bin/norm
+
+plot-results: ./results/serial.yaml ./results/threaded.yaml	bin/benchmark
+	./bin/benchmark \
+		-results-path ./results
+		-plot
 
 clean: ./bin
 	rm -rfv ./bin
