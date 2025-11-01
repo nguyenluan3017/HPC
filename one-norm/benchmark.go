@@ -182,9 +182,11 @@ func main() {
 	const numberOfIterations = 1
 	sysinfo := getCPUInfo()
 	done := make(chan bool)
+	numberOfThreads := sysinfo.logicalCores
+
 	execPath := flag.String("exec", "./bin/norm", "Path to exectuable to benchmark")
 	outputDir := flag.String("output-dir", "/tmp", "Output directory for benchmark results")
-	numberOfThreads := sysinfo.logicalCores
+	flag.Parse()
 
 	threadedOutputFile, err := os.OpenFile(*outputDir+"/threaded_results.yaml", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
