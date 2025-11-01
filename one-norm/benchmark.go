@@ -23,11 +23,11 @@ type CPUInfo struct {
 }
 
 type TestConfig struct {
-    blockSize          uint
-    numberOfThreads    *uint
-    numberOfIterations uint
-    execPath           string
-	outputFile *os.File
+	blockSize          uint
+	numberOfThreads    *uint
+	numberOfIterations uint
+	execPath           string
+	outputFile         *os.File
 	done               chan<- bool
 }
 
@@ -88,7 +88,7 @@ func getCPUInfo() CPUInfo {
 				for _, line := range lines {
 					if strings.Contains(line, "CPU(s):") && !strings.Contains(line, "NUMA") {
 						parts := strings.Fields(line)
-						size, err := strconv.ParseInt(parts[1], 10, 8 * 8)
+						size, err := strconv.ParseInt(parts[1], 10, 8*8)
 						if err != nil {
 							panic(err)
 						}
@@ -181,41 +181,41 @@ func main() {
 	const blockSize = 512
 	const numberOfIterations = 1
 	sysinfo := getCPUInfo()
-	done := make(chan bool)	
+	done := make(chan bool)
 	execPath := flag.String("exec", "./bin/norm", "Path to exectuable to benchmark")
 	outputDir := flag.String("output-dir", "/tmp", "Output directory for benchmark results")
 	numberOfThreads := sysinfo.logicalCores
 
-	threadedOutputFile, err := os.OpenFile(*outputDir + "/threaded_results.yaml", os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
+	threadedOutputFile, err := os.OpenFile(*outputDir+"/threaded_results.yaml", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
 	defer threadedOutputFile.Close()
 
-	serialOutputFile, err := os.OpenFile(*outputDir + "/serial_results.yaml", os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
+	serialOutputFile, err := os.OpenFile(*outputDir+"/serial_results.yaml", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
 	defer serialOutputFile.Close()
 
 	go runThreadedTest(TestConfig{
-		blockSize: blockSize,
-		numberOfThreads: &numberOfThreads,
+		blockSize:          blockSize,
+		numberOfThreads:    &numberOfThreads,
 		numberOfIterations: numberOfIterations,
-		execPath: *execPath,
-		done: done,
-		outputFile: threadedOutputFile,
+		execPath:           *execPath,
+		done:               done,
+		outputFile:         threadedOutputFile,
 	})
 
-	<- done	
+	<-done
 
 	go runSerialTest(TestConfig{
-		blockSize: blockSize,
+		blockSize:          blockSize,
 		numberOfIterations: numberOfIterations,
-		execPath: *execPath,
-		done: done,
-		outputFile: serialOutputFile,
+		execPath:           *execPath,
+		done:               done,
+		outputFile:         serialOutputFile,
 	})
 
-	<- done
+	<-done
 }
