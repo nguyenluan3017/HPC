@@ -25,7 +25,7 @@ benchmark: bin/benchmark bin/norm
 		-output-dir ./out \
 		-exec ./bin/norm
 
-plot-results: ./results/serial.yaml ./results/threaded.yaml	bin/benchmark
+plot-results: ./results/serial.yaml ./results/threaded.yaml bin/benchmark
 	mkdir -p ./results
 	mkdir -p ./img
 	./bin/benchmark \

@@ -292,10 +292,10 @@ func ensureOutputFile(path string) *os.File {
 }
 
 func benchmark(blockSize uint, numberOfThreads uint, numberOfIterations uint, execPath string, outputDir string, done chan<- bool) {
-	threadedOutputFile := ensureOutputFile(outputDir + "/" + THREADED_RESULTS_FILE)
+	threadedOutputFile := ensureOutputFile(filepath.Join(outputDir, THREADED_RESULTS_FILE))
 	defer threadedOutputFile.Close()
 
-	serialOutputFile := ensureOutputFile(outputDir + "/" + SERIAL_RESULTS_FILE)
+	serialOutputFile := ensureOutputFile(filepath.Join(outputDir, SERIAL_RESULTS_FILE))
 	defer serialOutputFile.Close()
 
 	go runThreadedTest(TestConfiguration{
@@ -337,7 +337,7 @@ func readBenchmarkResults(resultPath string) (BenchmarkResults, error) {
 	return results, nil
 }
 
-func plotRuntimeDependenceOnMatricSize(serialResults BenchmarkResults, threadedResults BenchmarkResults, imageDirPath string) {
+func plotRuntimeDependenceOnMatrixSize(serialResults BenchmarkResults, threadedResults BenchmarkResults, imageDirPath string) {
 	p := plot.New()
 	p.Title.Text = "Runtime vs Matrix Size"
 	p.X.Label.Text = "Matrix Size"
@@ -369,8 +369,111 @@ func plotRuntimeDependenceOnMatricSize(serialResults BenchmarkResults, threadedR
 	imagePath := filepath.Join(imageDirPath, "runtime_vs_matrix_size.png")
 
 	// Save the plot
-	if err := p.Save(10*vg.Inch, 6*vg.Inch, imagePath); err != nil {
+	if err := p.Save(12*vg.Inch, 8*vg.Inch, imagePath); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func plotSerialAndThreadedSpeedup(serialResults BenchmarkResults, threadedResults BenchmarkResults, imageDirPath string) {
+	p := plot.New()
+	p.Title.Text = "Runtime Comparison: Serial vs Threaded Implementation"
+	p.Y.Label.Text = "Average Execution Time (seconds)"
+
+	// Create maps for organizing data by matrix size
+	serialTimes := make(map[uint]float64)
+	threadedTimes := make(map[uint]float64)
+
+	for _, result := range serialResults {
+		serialTimes[result.Metadata.MatrixSize] = result.Stats.Total.AvgTime
+	}
+
+	for _, result := range threadedResults {
+		threadedTimes[result.Metadata.MatrixSize] = result.Stats.Total.AvgTime
+	}
+
+	// Get all matrix sizes and sort them
+	matrixSizes := make([]uint, 0)
+	for size := range serialTimes {
+		if _, exists := threadedTimes[size]; exists {
+			matrixSizes = append(matrixSizes, size)
+		}
+	}
+
+	// Sort matrix sizes for consistent ordering
+	for i := 0; i < len(matrixSizes)-1; i++ {
+		for j := 0; j < len(matrixSizes)-i-1; j++ {
+			if matrixSizes[j] > matrixSizes[j+1] {
+				matrixSizes[j], matrixSizes[j+1] = matrixSizes[j+1], matrixSizes[j]
+			}
+		}
+	}
+
+	// Prepare data for bar charts
+	serialValues := make(plotter.Values, len(matrixSizes))
+	threadedValues := make(plotter.Values, len(matrixSizes))
+	labels := make([]string, len(matrixSizes))
+
+	for i, size := range matrixSizes {
+		serialValues[i] = serialTimes[size]
+		threadedValues[i] = threadedTimes[size]
+		labels[i] = fmt.Sprintf("%d", size)
+	}
+
+	// Create bar charts
+	barWidth := vg.Points(25)
+
+	serialBars, err := plotter.NewBarChart(serialValues, barWidth)
+	if err != nil {
+		log.Fatal(err)
+	}
+	serialBars.Color = plotutil.Color(0) // Red/Orange
+	serialBars.Offset = -barWidth / 2
+
+	threadedBars, err := plotter.NewBarChart(threadedValues, barWidth)
+	if err != nil {
+		log.Fatal(err)
+	}
+	threadedBars.Color = plotutil.Color(1) // Blue
+	threadedBars.Offset = barWidth / 2
+
+	// Add bars to plot
+	p.Add(serialBars, threadedBars)
+
+	// Set up X axis labels
+	p.NominalX(labels...)
+
+	// Add legend
+	p.Legend.Add("Serial", serialBars)
+	p.Legend.Add("Threaded", threadedBars)
+	p.Legend.Top = true
+	p.Legend.Left = true
+
+	// Set Y axis to start from 0
+	p.Y.Min = 0
+
+	// Add X axis label
+	p.X.Label.Text = "Matrix Size"
+
+	// Create the full path for the image file
+	imagePath := filepath.Join(imageDirPath, "runtime_comparison_bars.png")
+
+	// Save the plot
+	if err := p.Save(12*vg.Inch, 8*vg.Inch, imagePath); err != nil {
+		log.Fatal(err)
+	}
+
+	// Print comparison information
+	fmt.Println("\nRuntime Comparison Analysis:")
+	fmt.Printf("%-12s %-15s %-15s %-12s\n", "Matrix Size", "Serial (s)", "Threaded (s)", "Speedup")
+	fmt.Println(strings.Repeat("-", 60))
+
+	for _, size := range matrixSizes {
+		serialTime := serialTimes[size]
+		threadedTime := threadedTimes[size]
+		speedup := serialTime / threadedTime
+
+		fmt.Printf("%-12d %-15.3f %-15.3f %-12.2fx\n",
+			size, serialTime, threadedTime, speedup)
 	}
 }
 
@@ -388,7 +491,13 @@ func plotResults(serialResultsPath string, threadedResultsPath string, imageDirP
 	// Ensure the image directory exists
 	os.MkdirAll(imageDirPath, 0755)
 
-	plotRuntimeDependenceOnMatricSize(
+	plotRuntimeDependenceOnMatrixSize(
+		serialResults,
+		threadedResults,
+		imageDirPath,
+	)
+
+	plotSerialAndThreadedSpeedup(
 		serialResults,
 		threadedResults,
 		imageDirPath,
