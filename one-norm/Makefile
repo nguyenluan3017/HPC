@@ -33,6 +33,9 @@ plot-results: ./results/serial.yaml ./results/threaded.yaml bin/benchmark
 		-images-path ./img \
 		-plot
 
+report.pdf: report.md img/
+	echo "making report.pdf"
+
 clean: ./bin
 	rm -rfv ./bin
 	rm -rfv ./out
