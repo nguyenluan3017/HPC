@@ -1,0 +1,1554 @@
+- benchmark_results:
+  metadata:
+    implementation: "threaded"
+    matrix_size: 1024
+    block_size: 512
+    num_threads: 16
+    num_repeats: 50
+    timestamp: 1762013302
+  statistics:
+    multiplication:
+      average_time: 0.203082255
+      min_time: 0.168924087
+      max_time: 0.568933212
+    norm_computation:
+      average_time: 0.003196539
+      min_time: 0.002629499
+      max_time: 0.005816102
+    total:
+      average_time: 0.206278793
+      min_time: 0.171553586
+      max_time: 0.574749314
+  individual_runs:
+    - run: 1
+      multiplication_time: 0.296949206
+      norm_time: 0.003093901
+      total_time: 0.300043107
+    - run: 2
+      multiplication_time: 0.247053591
+      norm_time: 0.002973401
+      total_time: 0.250026992
+    - run: 3
+      multiplication_time: 0.568933212
+      norm_time: 0.005816102
+      total_time: 0.574749314
+    - run: 4
+      multiplication_time: 0.189528770
+      norm_time: 0.002840301
+      total_time: 0.192369071
+    - run: 5
+      multiplication_time: 0.179133868
+      norm_time: 0.002885002
+      total_time: 0.182018870
+    - run: 6
+      multiplication_time: 0.177782868
+      norm_time: 0.002728201
+      total_time: 0.180511069
+    - run: 7
+      multiplication_time: 0.201913578
+      norm_time: 0.002850202
+      total_time: 0.204763780
+    - run: 8
+      multiplication_time: 0.194559475
+      norm_time: 0.002822101
+      total_time: 0.197381576
+    - run: 9
+      multiplication_time: 0.203140679
+      norm_time: 0.005662202
+      total_time: 0.208802881
+    - run: 10
+      multiplication_time: 0.199583578
+      norm_time: 0.002889001
+      total_time: 0.202472579
+    - run: 11
+      multiplication_time: 0.179304065
+      norm_time: 0.002956300
+      total_time: 0.182260365
+    - run: 12
+      multiplication_time: 0.169670685
+      norm_time: 0.002744300
+      total_time: 0.172414985
+    - run: 13
+      multiplication_time: 0.183183584
+      norm_time: 0.003046499
+      total_time: 0.186230083
+    - run: 14
+      multiplication_time: 0.181292484
+      norm_time: 0.002868600
+      total_time: 0.184161084
+    - run: 15
+      multiplication_time: 0.197324683
+      norm_time: 0.002780000
+      total_time: 0.200104683
+    - run: 16
+      multiplication_time: 0.191876386
+      norm_time: 0.005548299
+      total_time: 0.197424685
+    - run: 17
+      multiplication_time: 0.180263187
+      norm_time: 0.002732400
+      total_time: 0.182995587
+    - run: 18
+      multiplication_time: 0.181325886
+      norm_time: 0.002708800
+      total_time: 0.184034686
+    - run: 19
+      multiplication_time: 0.168924087
+      norm_time: 0.002838900
+      total_time: 0.171762987
+    - run: 20
+      multiplication_time: 0.174723187
+      norm_time: 0.002993600
+      total_time: 0.177716787
+    - run: 21
+      multiplication_time: 0.183819188
+      norm_time: 0.002797500
+      total_time: 0.186616688
+    - run: 22
+      multiplication_time: 0.175643790
+      norm_time: 0.002629499
+      total_time: 0.178273289
+    - run: 23
+      multiplication_time: 0.177279290
+      norm_time: 0.003364700
+      total_time: 0.180643990
+    - run: 24
+      multiplication_time: 0.223409786
+      norm_time: 0.002905800
+      total_time: 0.226315586
+    - run: 25
+      multiplication_time: 0.191686589
+      norm_time: 0.002946800
+      total_time: 0.194633389
+    - run: 26
+      multiplication_time: 0.203135389
+      norm_time: 0.003740800
+      total_time: 0.206876189
+    - run: 27
+      multiplication_time: 0.212657090
+      norm_time: 0.003235800
+      total_time: 0.215892890
+    - run: 28
+      multiplication_time: 0.217064790
+      norm_time: 0.004124400
+      total_time: 0.221189190
+    - run: 29
+      multiplication_time: 0.231127890
+      norm_time: 0.002748700
+      total_time: 0.233876590
+    - run: 30
+      multiplication_time: 0.210508290
+      norm_time: 0.003777600
+      total_time: 0.214285890
+    - run: 31
+      multiplication_time: 0.194651994
+      norm_time: 0.002663400
+      total_time: 0.197315394
+    - run: 32
+      multiplication_time: 0.187367194
+      norm_time: 0.002752600
+      total_time: 0.190119794
+    - run: 33
+      multiplication_time: 0.187874894
+      norm_time: 0.002892600
+      total_time: 0.190767494
+    - run: 34
+      multiplication_time: 0.172053495
+      norm_time: 0.003083800
+      total_time: 0.175137295
+    - run: 35
+      multiplication_time: 0.198392094
+      norm_time: 0.002991700
+      total_time: 0.201383794
+    - run: 36
+      multiplication_time: 0.202334796
+      norm_time: 0.002963300
+      total_time: 0.205298096
+    - run: 37
+      multiplication_time: 0.191354596
+      norm_time: 0.002743800
+      total_time: 0.194098396
+    - run: 38
+      multiplication_time: 0.193228997
+      norm_time: 0.003403800
+      total_time: 0.196632797
+    - run: 39
+      multiplication_time: 0.194067097
+      norm_time: 0.002854200
+      total_time: 0.196921297
+    - run: 40
+      multiplication_time: 0.184101597
+      norm_time: 0.003774100
+      total_time: 0.187875697
+    - run: 41
+      multiplication_time: 0.203819299
+      norm_time: 0.002882100
+      total_time: 0.206701399
+    - run: 42
+      multiplication_time: 0.189621510
+      norm_time: 0.003452902
+      total_time: 0.193074412
+    - run: 43
+      multiplication_time: 0.239740038
+      norm_time: 0.002810701
+      total_time: 0.242550739
+    - run: 44
+      multiplication_time: 0.214236423
+      norm_time: 0.002932202
+      total_time: 0.217168625
+    - run: 45
+      multiplication_time: 0.198139414
+      norm_time: 0.002796702
+      total_time: 0.200936116
+    - run: 46
+      multiplication_time: 0.176566404
+      norm_time: 0.004174402
+      total_time: 0.180740806
+    - run: 47
+      multiplication_time: 0.187389310
+      norm_time: 0.003046302
+      total_time: 0.190435612
+    - run: 48
+      multiplication_time: 0.187338411
+      norm_time: 0.002642001
+      total_time: 0.189980412
+    - run: 49
+      multiplication_time: 0.182307708
+      norm_time: 0.003008601
+      total_time: 0.185316309
+    - run: 50
+      multiplication_time: 0.176728305
+      norm_time: 0.003908002
+      total_time: 0.180636307
+- benchmark_results:
+  metadata:
+    implementation: "threaded"
+    matrix_size: 1536
+    block_size: 512
+    num_threads: 16
+    num_repeats: 50
+    timestamp: 1762013333
+  statistics:
+    multiplication:
+      average_time: 0.607947858
+      min_time: 0.519453117
+      max_time: 1.412053266
+    norm_computation:
+      average_time: 0.003375507
+      min_time: 0.002854900
+      max_time: 0.011505174
+    total:
+      average_time: 0.611323364
+      min_time: 0.522308017
+      max_time: 1.423558440
+  individual_runs:
+    - run: 1
+      multiplication_time: 0.791730864
+      norm_time: 0.003493292
+      total_time: 0.795224156
+    - run: 2
+      multiplication_time: 0.697515194
+      norm_time: 0.003131193
+      total_time: 0.700646387
+    - run: 3
+      multiplication_time: 1.412053266
+      norm_time: 0.011505174
+      total_time: 1.423558440
+    - run: 4
+      multiplication_time: 0.612282607
+      norm_time: 0.003701092
+      total_time: 0.615983699
+    - run: 5
+      multiplication_time: 0.684933313
+      norm_time: 0.003380502
+      total_time: 0.688313815
+    - run: 6
+      multiplication_time: 0.600713496
+      norm_time: 0.002880802
+      total_time: 0.603594298
+    - run: 7
+      multiplication_time: 0.596152503
+      norm_time: 0.002946501
+      total_time: 0.599099004
+    - run: 8
+      multiplication_time: 0.586509301
+      norm_time: 0.003405802
+      total_time: 0.589915103
+    - run: 9
+      multiplication_time: 0.577123801
+      norm_time: 0.002928202
+      total_time: 0.580052003
+    - run: 10
+      multiplication_time: 0.588763213
+      norm_time: 0.003029701
+      total_time: 0.591792914
+    - run: 11
+      multiplication_time: 0.532061786
+      norm_time: 0.003145901
+      total_time: 0.535207687
+    - run: 12
+      multiplication_time: 0.534313036
+      norm_time: 0.002922300
+      total_time: 0.537235336
+    - run: 13
+      multiplication_time: 0.586334631
+      norm_time: 0.003124500
+      total_time: 0.589459131
+    - run: 14
+      multiplication_time: 0.630480441
+      norm_time: 0.003009600
+      total_time: 0.633490041
+    - run: 15
+      multiplication_time: 0.591166743
+      norm_time: 0.003376500
+      total_time: 0.594543243
+    - run: 16
+      multiplication_time: 0.596586947
+      norm_time: 0.003017700
+      total_time: 0.599604647
+    - run: 17
+      multiplication_time: 0.629496757
+      norm_time: 0.002970500
+      total_time: 0.632467257
+    - run: 18
+      multiplication_time: 0.558554753
+      norm_time: 0.002991801
+      total_time: 0.561546554
+    - run: 19
+      multiplication_time: 0.577272362
+      norm_time: 0.002948800
+      total_time: 0.580221162
+    - run: 20
+      multiplication_time: 0.597534467
+      norm_time: 0.003744501
+      total_time: 0.601278968
+    - run: 21
+      multiplication_time: 0.621264875
+      norm_time: 0.003021100
+      total_time: 0.624285975
+    - run: 22
+      multiplication_time: 0.567346075
+      norm_time: 0.003003501
+      total_time: 0.570349576
+    - run: 23
+      multiplication_time: 0.534387072
+      norm_time: 0.003559600
+      total_time: 0.537946672
+    - run: 24
+      multiplication_time: 0.552247482
+      norm_time: 0.002854900
+      total_time: 0.555102382
+    - run: 25
+      multiplication_time: 0.536876081
+      norm_time: 0.003137401
+      total_time: 0.540013482
+    - run: 26
+      multiplication_time: 0.536225901
+      norm_time: 0.003070396
+      total_time: 0.539296297
+    - run: 27
+      multiplication_time: 0.548978308
+      norm_time: 0.003742196
+      total_time: 0.552720504
+    - run: 28
+      multiplication_time: 0.558739702
+      norm_time: 0.005376294
+      total_time: 0.564115996
+    - run: 29
+      multiplication_time: 0.541936625
+      norm_time: 0.002914497
+      total_time: 0.544851122
+    - run: 30
+      multiplication_time: 0.552430616
+      norm_time: 0.003162597
+      total_time: 0.555593213
+    - run: 31
+      multiplication_time: 0.572176301
+      norm_time: 0.002983497
+      total_time: 0.575159798
+    - run: 32
+      multiplication_time: 0.552647024
+      norm_time: 0.002924997
+      total_time: 0.555572021
+    - run: 33
+      multiplication_time: 0.544124340
+      norm_time: 0.003064897
+      total_time: 0.547189237
+    - run: 34
+      multiplication_time: 0.534288552
+      norm_time: 0.003033296
+      total_time: 0.537321848
+    - run: 35
+      multiplication_time: 0.552852140
+      norm_time: 0.002920597
+      total_time: 0.555772737
+    - run: 36
+      multiplication_time: 0.573687920
+      norm_time: 0.003154897
+      total_time: 0.576842817
+    - run: 37
+      multiplication_time: 0.540809859
+      norm_time: 0.002891797
+      total_time: 0.543701656
+    - run: 38
+      multiplication_time: 0.547010756
+      norm_time: 0.002951597
+      total_time: 0.549962353
+    - run: 39
+      multiplication_time: 0.519453117
+      norm_time: 0.003018301
+      total_time: 0.522471418
+    - run: 40
+      multiplication_time: 0.548657469
+      norm_time: 0.003127301
+      total_time: 0.551784770
+    - run: 41
+      multiplication_time: 0.553064499
+      norm_time: 0.003065101
+      total_time: 0.556129600
+    - run: 42
+      multiplication_time: 0.639532610
+      norm_time: 0.003271700
+      total_time: 0.642804310
+    - run: 43
+      multiplication_time: 0.553749898
+      norm_time: 0.003292101
+      total_time: 0.557041999
+    - run: 44
+      multiplication_time: 0.545087102
+      norm_time: 0.002979100
+      total_time: 0.548066202
+    - run: 45
+      multiplication_time: 0.635510723
+      norm_time: 0.003558901
+      total_time: 0.639069624
+    - run: 46
+      multiplication_time: 0.685628238
+      norm_time: 0.002930401
+      total_time: 0.688558639
+    - run: 47
+      multiplication_time: 0.668808843
+      norm_time: 0.003005400
+      total_time: 0.671814243
+    - run: 48
+      multiplication_time: 0.682844051
+      norm_time: 0.004423501
+      total_time: 0.687267552
+    - run: 49
+      multiplication_time: 0.774258079
+      norm_time: 0.003440600
+      total_time: 0.777698679
+    - run: 50
+      multiplication_time: 0.641189155
+      norm_time: 0.003240501
+      total_time: 0.644429656
+- benchmark_results:
+  metadata:
+    implementation: "threaded"
+    matrix_size: 2048
+    block_size: 512
+    num_threads: 16
+    num_repeats: 50
+    timestamp: 1762013410
+  statistics:
+    multiplication:
+      average_time: 1.510939199
+      min_time: 1.311692359
+      max_time: 1.722151838
+    norm_computation:
+      average_time: 0.003616312
+      min_time: 0.003216302
+      max_time: 0.005564994
+    total:
+      average_time: 1.514555511
+      min_time: 1.314908661
+      max_time: 1.727716832
+  individual_runs:
+    - run: 1
+      multiplication_time: 1.535537644
+      norm_time: 0.003480798
+      total_time: 1.539018442
+    - run: 2
+      multiplication_time: 1.441844622
+      norm_time: 0.003391798
+      total_time: 1.445236420
+    - run: 3
+      multiplication_time: 1.521842414
+      norm_time: 0.004231598
+      total_time: 1.526074012
+    - run: 4
+      multiplication_time: 1.538259838
+      norm_time: 0.003353599
+      total_time: 1.541613437
+    - run: 5
+      multiplication_time: 1.518622077
+      norm_time: 0.003404198
+      total_time: 1.522026275
+    - run: 6
+      multiplication_time: 1.532705803
+      norm_time: 0.003850699
+      total_time: 1.536556502
+    - run: 7
+      multiplication_time: 1.380508361
+      norm_time: 0.003483206
+      total_time: 1.383991567
+    - run: 8
+      multiplication_time: 1.472580758
+      norm_time: 0.003369105
+      total_time: 1.475949863
+    - run: 9
+      multiplication_time: 1.404478282
+      norm_time: 0.003244602
+      total_time: 1.407722884
+    - run: 10
+      multiplication_time: 1.481954074
+      norm_time: 0.003878002
+      total_time: 1.485832076
+    - run: 11
+      multiplication_time: 1.722151838
+      norm_time: 0.003598702
+      total_time: 1.725750540
+    - run: 12
+      multiplication_time: 1.455467145
+      norm_time: 0.003335899
+      total_time: 1.458803044
+    - run: 13
+      multiplication_time: 1.406784983
+      norm_time: 0.003498999
+      total_time: 1.410283982
+    - run: 14
+      multiplication_time: 1.521593078
+      norm_time: 0.003932099
+      total_time: 1.525525177
+    - run: 15
+      multiplication_time: 1.411084836
+      norm_time: 0.003530599
+      total_time: 1.414615435
+    - run: 16
+      multiplication_time: 1.311692359
+      norm_time: 0.003322602
+      total_time: 1.315014961
+    - run: 17
+      multiplication_time: 1.509017580
+      norm_time: 0.003335002
+      total_time: 1.512352582
+    - run: 18
+      multiplication_time: 1.520583130
+      norm_time: 0.003284588
+      total_time: 1.523867718
+    - run: 19
+      multiplication_time: 1.577242643
+      norm_time: 0.003626501
+      total_time: 1.580869144
+    - run: 20
+      multiplication_time: 1.614183305
+      norm_time: 0.005384902
+      total_time: 1.619568207
+    - run: 21
+      multiplication_time: 1.648650351
+      norm_time: 0.004446202
+      total_time: 1.653096553
+    - run: 22
+      multiplication_time: 1.581793659
+      norm_time: 0.003455102
+      total_time: 1.585248761
+    - run: 23
+      multiplication_time: 1.491832343
+      norm_time: 0.003300799
+      total_time: 1.495133142
+    - run: 24
+      multiplication_time: 1.512388356
+      norm_time: 0.003374800
+      total_time: 1.515763156
+    - run: 25
+      multiplication_time: 1.489613184
+      norm_time: 0.003417800
+      total_time: 1.493030984
+    - run: 26
+      multiplication_time: 1.460171870
+      norm_time: 0.003216302
+      total_time: 1.463388172
+    - run: 27
+      multiplication_time: 1.550456013
+      norm_time: 0.003348601
+      total_time: 1.553804614
+    - run: 28
+      multiplication_time: 1.514353928
+      norm_time: 0.004645201
+      total_time: 1.518999129
+    - run: 29
+      multiplication_time: 1.509693563
+      norm_time: 0.003264801
+      total_time: 1.512958364
+    - run: 30
+      multiplication_time: 1.477758583
+      norm_time: 0.003949001
+      total_time: 1.481707584
+    - run: 31
+      multiplication_time: 1.536293228
+      norm_time: 0.003313301
+      total_time: 1.539606529
+    - run: 32
+      multiplication_time: 1.387687904
+      norm_time: 0.003534502
+      total_time: 1.391222406
+    - run: 33
+      multiplication_time: 1.706618856
+      norm_time: 0.003786401
+      total_time: 1.710405257
+    - run: 34
+      multiplication_time: 1.485907646
+      norm_time: 0.003272301
+      total_time: 1.489179947
+    - run: 35
+      multiplication_time: 1.349685745
+      norm_time: 0.003246801
+      total_time: 1.352932546
+    - run: 36
+      multiplication_time: 1.476248696
+      norm_time: 0.003250201
+      total_time: 1.479498897
+    - run: 37
+      multiplication_time: 1.537593834
+      norm_time: 0.004091901
+      total_time: 1.541685735
+    - run: 38
+      multiplication_time: 1.575750775
+      norm_time: 0.003418401
+      total_time: 1.579169176
+    - run: 39
+      multiplication_time: 1.493304561
+      norm_time: 0.005564994
+      total_time: 1.498869555
+    - run: 40
+      multiplication_time: 1.493546524
+      norm_time: 0.003290896
+      total_time: 1.496837420
+    - run: 41
+      multiplication_time: 1.540314301
+      norm_time: 0.003788596
+      total_time: 1.544102897
+    - run: 42
+      multiplication_time: 1.610691551
+      norm_time: 0.003474701
+      total_time: 1.614166252
+    - run: 43
+      multiplication_time: 1.612932891
+      norm_time: 0.003225702
+      total_time: 1.616158593
+    - run: 44
+      multiplication_time: 1.597447127
+      norm_time: 0.003530800
+      total_time: 1.600977927
+    - run: 45
+      multiplication_time: 1.621636045
+      norm_time: 0.003501601
+      total_time: 1.625137646
+    - run: 46
+      multiplication_time: 1.429747115
+      norm_time: 0.003289601
+      total_time: 1.433036716
+    - run: 47
+      multiplication_time: 1.562804884
+      norm_time: 0.003998201
+      total_time: 1.566803085
+    - run: 48
+      multiplication_time: 1.494959888
+      norm_time: 0.003435801
+      total_time: 1.498395689
+    - run: 49
+      multiplication_time: 1.507137032
+      norm_time: 0.003308797
+      total_time: 1.510445829
+    - run: 50
+      multiplication_time: 1.411804739
+      norm_time: 0.003535997
+      total_time: 1.415340736
+- benchmark_results:
+  metadata:
+    implementation: "threaded"
+    matrix_size: 2560
+    block_size: 512
+    num_threads: 16
+    num_repeats: 50
+    timestamp: 1762013557
+  statistics:
+    multiplication:
+      average_time: 2.931119370
+      min_time: 2.388705000
+      max_time: 4.624876946
+    norm_computation:
+      average_time: 0.004265406
+      min_time: 0.003499501
+      max_time: 0.008754002
+    total:
+      average_time: 2.935384776
+      min_time: 2.392204501
+      max_time: 4.633630948
+  individual_runs:
+    - run: 1
+      multiplication_time: 2.890860154
+      norm_time: 0.003839101
+      total_time: 2.894699255
+    - run: 2
+      multiplication_time: 2.863027289
+      norm_time: 0.004147595
+      total_time: 2.867174884
+    - run: 3
+      multiplication_time: 2.918176115
+      norm_time: 0.004021896
+      total_time: 2.922198011
+    - run: 4
+      multiplication_time: 2.570567400
+      norm_time: 0.004566602
+      total_time: 2.575134002
+    - run: 5
+      multiplication_time: 2.855121029
+      norm_time: 0.004148799
+      total_time: 2.859269828
+    - run: 6
+      multiplication_time: 2.786166746
+      norm_time: 0.004165499
+      total_time: 2.790332245
+    - run: 7
+      multiplication_time: 2.548337386
+      norm_time: 0.004301699
+      total_time: 2.552639085
+    - run: 8
+      multiplication_time: 2.551017042
+      norm_time: 0.004233002
+      total_time: 2.555250044
+    - run: 9
+      multiplication_time: 2.641311263
+      norm_time: 0.004164303
+      total_time: 2.645475566
+    - run: 10
+      multiplication_time: 2.884871976
+      norm_time: 0.004876503
+      total_time: 2.889748479
+    - run: 11
+      multiplication_time: 2.933584736
+      norm_time: 0.004075202
+      total_time: 2.937659938
+    - run: 12
+      multiplication_time: 2.803917892
+      norm_time: 0.004026902
+      total_time: 2.807944794
+    - run: 13
+      multiplication_time: 2.893698323
+      norm_time: 0.004301002
+      total_time: 2.897999325
+    - run: 14
+      multiplication_time: 2.906284194
+      norm_time: 0.004075599
+      total_time: 2.910359793
+    - run: 15
+      multiplication_time: 2.899915137
+      norm_time: 0.004005100
+      total_time: 2.903920237
+    - run: 16
+      multiplication_time: 2.711428342
+      norm_time: 0.004177899
+      total_time: 2.715606241
+    - run: 17
+      multiplication_time: 2.519458623
+      norm_time: 0.004039599
+      total_time: 2.523498222
+    - run: 18
+      multiplication_time: 2.564544605
+      norm_time: 0.004124199
+      total_time: 2.568668804
+    - run: 19
+      multiplication_time: 2.623509558
+      norm_time: 0.004648199
+      total_time: 2.628157757
+    - run: 20
+      multiplication_time: 2.617597977
+      norm_time: 0.004449294
+      total_time: 2.622047271
+    - run: 21
+      multiplication_time: 2.684987479
+      norm_time: 0.003754595
+      total_time: 2.688742074
+    - run: 22
+      multiplication_time: 2.801449503
+      norm_time: 0.003996101
+      total_time: 2.805445604
+    - run: 23
+      multiplication_time: 2.963730650
+      norm_time: 0.004232100
+      total_time: 2.967962750
+    - run: 24
+      multiplication_time: 2.838355097
+      norm_time: 0.004194001
+      total_time: 2.842549098
+    - run: 25
+      multiplication_time: 4.624876946
+      norm_time: 0.003916801
+      total_time: 4.628793747
+    - run: 26
+      multiplication_time: 3.800775722
+      norm_time: 0.004801402
+      total_time: 3.805577124
+    - run: 27
+      multiplication_time: 3.772592393
+      norm_time: 0.005642302
+      total_time: 3.778234695
+    - run: 28
+      multiplication_time: 3.567984376
+      norm_time: 0.003766801
+      total_time: 3.571751177
+    - run: 29
+      multiplication_time: 3.268159113
+      norm_time: 0.008754002
+      total_time: 3.276913115
+    - run: 30
+      multiplication_time: 3.497622510
+      norm_time: 0.004172801
+      total_time: 3.501795311
+    - run: 31
+      multiplication_time: 3.545202592
+      norm_time: 0.006011801
+      total_time: 3.551214393
+    - run: 32
+      multiplication_time: 3.001698356
+      norm_time: 0.003714900
+      total_time: 3.005413256
+    - run: 33
+      multiplication_time: 3.496999112
+      norm_time: 0.004296899
+      total_time: 3.501296011
+    - run: 34
+      multiplication_time: 3.232609586
+      norm_time: 0.004037996
+      total_time: 3.236647582
+    - run: 35
+      multiplication_time: 3.557185068
+      norm_time: 0.004052501
+      total_time: 3.561237569
+    - run: 36
+      multiplication_time: 2.912447595
+      norm_time: 0.004264402
+      total_time: 2.916711997
+    - run: 37
+      multiplication_time: 2.873721524
+      norm_time: 0.003933199
+      total_time: 2.877654723
+    - run: 38
+      multiplication_time: 2.769095741
+      norm_time: 0.003833799
+      total_time: 2.772929540
+    - run: 39
+      multiplication_time: 2.789193417
+      norm_time: 0.003726901
+      total_time: 2.792920318
+    - run: 40
+      multiplication_time: 2.906907281
+      norm_time: 0.004168301
+      total_time: 2.911075582
+    - run: 41
+      multiplication_time: 2.903938697
+      norm_time: 0.003862501
+      total_time: 2.907801198
+    - run: 42
+      multiplication_time: 3.167666591
+      norm_time: 0.004283797
+      total_time: 3.171950388
+    - run: 43
+      multiplication_time: 2.849702729
+      norm_time: 0.005104601
+      total_time: 2.854807330
+    - run: 44
+      multiplication_time: 2.879081563
+      norm_time: 0.003587001
+      total_time: 2.882668564
+    - run: 45
+      multiplication_time: 2.534271201
+      norm_time: 0.003549601
+      total_time: 2.537820802
+    - run: 46
+      multiplication_time: 2.492204838
+      norm_time: 0.003695001
+      total_time: 2.495899839
+    - run: 47
+      multiplication_time: 2.406536363
+      norm_time: 0.003769601
+      total_time: 2.410305964
+    - run: 48
+      multiplication_time: 2.482532743
+      norm_time: 0.004601202
+      total_time: 2.487133945
+    - run: 49
+      multiplication_time: 2.562338906
+      norm_time: 0.003499501
+      total_time: 2.565838407
+    - run: 50
+      multiplication_time: 2.388705000
+      norm_time: 0.003657902
+      total_time: 2.392362902
+- benchmark_results:
+  metadata:
+    implementation: "threaded"
+    matrix_size: 3072
+    block_size: 512
+    num_threads: 16
+    num_repeats: 50
+    timestamp: 1762013787
+  statistics:
+    multiplication:
+      average_time: 4.586103781
+      min_time: 4.186123152
+      max_time: 5.231035533
+    norm_computation:
+      average_time: 0.004435374
+      min_time: 0.003733076
+      max_time: 0.008044800
+    total:
+      average_time: 4.590539155
+      min_time: 4.189856228
+      max_time: 5.239080333
+  individual_runs:
+    - run: 1
+      multiplication_time: 5.016705780
+      norm_time: 0.004057700
+      total_time: 5.020763480
+    - run: 2
+      multiplication_time: 4.287437365
+      norm_time: 0.004595702
+      total_time: 4.292033067
+    - run: 3
+      multiplication_time: 4.294958538
+      norm_time: 0.003980896
+      total_time: 4.298939434
+    - run: 4
+      multiplication_time: 4.384320088
+      norm_time: 0.004335102
+      total_time: 4.388655190
+    - run: 5
+      multiplication_time: 4.405314202
+      norm_time: 0.004073099
+      total_time: 4.409387301
+    - run: 6
+      multiplication_time: 4.370289959
+      norm_time: 0.004164195
+      total_time: 4.374454154
+    - run: 7
+      multiplication_time: 4.226888906
+      norm_time: 0.004330796
+      total_time: 4.231219702
+    - run: 8
+      multiplication_time: 4.497644524
+      norm_time: 0.004297587
+      total_time: 4.501942111
+    - run: 9
+      multiplication_time: 5.098883007
+      norm_time: 0.004221200
+      total_time: 5.103104207
+    - run: 10
+      multiplication_time: 4.423499329
+      norm_time: 0.004271900
+      total_time: 4.427771229
+    - run: 11
+      multiplication_time: 4.607519905
+      norm_time: 0.004933799
+      total_time: 4.612453704
+    - run: 12
+      multiplication_time: 4.981064333
+      norm_time: 0.004193902
+      total_time: 4.985258235
+    - run: 13
+      multiplication_time: 4.870549137
+      norm_time: 0.004208802
+      total_time: 4.874757939
+    - run: 14
+      multiplication_time: 4.501479908
+      norm_time: 0.004231002
+      total_time: 4.505710910
+    - run: 15
+      multiplication_time: 4.370549231
+      norm_time: 0.004206202
+      total_time: 4.374755433
+    - run: 16
+      multiplication_time: 4.632743642
+      norm_time: 0.004157201
+      total_time: 4.636900843
+    - run: 17
+      multiplication_time: 4.537125452
+      norm_time: 0.004177500
+      total_time: 4.541302952
+    - run: 18
+      multiplication_time: 4.795691041
+      norm_time: 0.004779800
+      total_time: 4.800470841
+    - run: 19
+      multiplication_time: 4.982644291
+      norm_time: 0.004491299
+      total_time: 4.987135590
+    - run: 20
+      multiplication_time: 5.046506654
+      norm_time: 0.004624802
+      total_time: 5.051131456
+    - run: 21
+      multiplication_time: 4.609132886
+      norm_time: 0.004586402
+      total_time: 4.613719288
+    - run: 22
+      multiplication_time: 4.433146252
+      norm_time: 0.004226699
+      total_time: 4.437372951
+    - run: 23
+      multiplication_time: 4.201403404
+      norm_time: 0.004921600
+      total_time: 4.206325004
+    - run: 24
+      multiplication_time: 4.361512364
+      norm_time: 0.004304500
+      total_time: 4.365816864
+    - run: 25
+      multiplication_time: 4.472303400
+      norm_time: 0.008044800
+      total_time: 4.480348200
+    - run: 26
+      multiplication_time: 4.392015760
+      norm_time: 0.004066002
+      total_time: 4.396081762
+    - run: 27
+      multiplication_time: 4.336709506
+      norm_time: 0.004582001
+      total_time: 4.341291507
+    - run: 28
+      multiplication_time: 4.324410252
+      norm_time: 0.004577801
+      total_time: 4.328988053
+    - run: 29
+      multiplication_time: 5.041220662
+      norm_time: 0.004113899
+      total_time: 5.045334561
+    - run: 30
+      multiplication_time: 5.231035533
+      norm_time: 0.004566702
+      total_time: 5.235602235
+    - run: 31
+      multiplication_time: 5.038057981
+      norm_time: 0.004026400
+      total_time: 5.042084381
+    - run: 32
+      multiplication_time: 4.647318012
+      norm_time: 0.004152199
+      total_time: 4.651470211
+    - run: 33
+      multiplication_time: 4.687030484
+      norm_time: 0.004147799
+      total_time: 4.691178283
+    - run: 34
+      multiplication_time: 4.186123152
+      norm_time: 0.004217489
+      total_time: 4.190340641
+    - run: 35
+      multiplication_time: 4.224816848
+      norm_time: 0.004365501
+      total_time: 4.229182349
+    - run: 36
+      multiplication_time: 4.278826318
+      norm_time: 0.004227899
+      total_time: 4.283054217
+    - run: 37
+      multiplication_time: 4.350236306
+      norm_time: 0.004357100
+      total_time: 4.354593406
+    - run: 38
+      multiplication_time: 4.958098851
+      norm_time: 0.005202001
+      total_time: 4.963300852
+    - run: 39
+      multiplication_time: 5.007248661
+      norm_time: 0.004588401
+      total_time: 5.011837062
+    - run: 40
+      multiplication_time: 4.198837780
+      norm_time: 0.004570501
+      total_time: 4.203408281
+    - run: 41
+      multiplication_time: 4.395336125
+      norm_time: 0.004575500
+      total_time: 4.399911625
+    - run: 42
+      multiplication_time: 4.731992347
+      norm_time: 0.004852300
+      total_time: 4.736844647
+    - run: 43
+      multiplication_time: 4.981174413
+      norm_time: 0.004601398
+      total_time: 4.985775811
+    - run: 44
+      multiplication_time: 5.019948707
+      norm_time: 0.004408101
+      total_time: 5.024356808
+    - run: 45
+      multiplication_time: 4.249791348
+      norm_time: 0.004109299
+      total_time: 4.253900647
+    - run: 46
+      multiplication_time: 4.452853593
+      norm_time: 0.004508702
+      total_time: 4.457362295
+    - run: 47
+      multiplication_time: 4.572214005
+      norm_time: 0.004650390
+      total_time: 4.576864395
+    - run: 48
+      multiplication_time: 4.539668745
+      norm_time: 0.003733076
+      total_time: 4.543401821
+    - run: 49
+      multiplication_time: 4.524935316
+      norm_time: 0.004185896
+      total_time: 4.529121212
+    - run: 50
+      multiplication_time: 4.525974755
+      norm_time: 0.003965844
+      total_time: 4.529940599
+- benchmark_results:
+  metadata:
+    implementation: "threaded"
+    matrix_size: 3584
+    block_size: 512
+    num_threads: 16
+    num_repeats: 50
+    timestamp: 1762014142
+  statistics:
+    multiplication:
+      average_time: 7.065240404
+      min_time: 6.342480070
+      max_time: 9.068858922
+    norm_computation:
+      average_time: 0.005061888
+      min_time: 0.004418031
+      max_time: 0.009232369
+    total:
+      average_time: 7.070302292
+      min_time: 6.346898101
+      max_time: 9.078091291
+  individual_runs:
+    - run: 1
+      multiplication_time: 6.868027822
+      norm_time: 0.004676622
+      total_time: 6.872704444
+    - run: 2
+      multiplication_time: 8.222975815
+      norm_time: 0.005047585
+      total_time: 8.228023400
+    - run: 3
+      multiplication_time: 9.068858922
+      norm_time: 0.005673573
+      total_time: 9.074532495
+    - run: 4
+      multiplication_time: 8.039892218
+      norm_time: 0.005538826
+      total_time: 8.045431044
+    - run: 5
+      multiplication_time: 8.132479494
+      norm_time: 0.005346844
+      total_time: 8.137826338
+    - run: 6
+      multiplication_time: 7.733567039
+      norm_time: 0.005044741
+      total_time: 7.738611780
+    - run: 7
+      multiplication_time: 6.629353890
+      norm_time: 0.004547119
+      total_time: 6.633901009
+    - run: 8
+      multiplication_time: 6.600513377
+      norm_time: 0.005148814
+      total_time: 6.605662191
+    - run: 9
+      multiplication_time: 8.243887537
+      norm_time: 0.005483292
+      total_time: 8.249370829
+    - run: 10
+      multiplication_time: 6.795726125
+      norm_time: 0.005413453
+      total_time: 6.801139578
+    - run: 11
+      multiplication_time: 6.662731304
+      norm_time: 0.005050150
+      total_time: 6.667781454
+    - run: 12
+      multiplication_time: 7.360611282
+      norm_time: 0.004512644
+      total_time: 7.365123926
+    - run: 13
+      multiplication_time: 7.146920643
+      norm_time: 0.005145448
+      total_time: 7.152066091
+    - run: 14
+      multiplication_time: 6.937950403
+      norm_time: 0.004532537
+      total_time: 6.942482940
+    - run: 15
+      multiplication_time: 6.352103805
+      norm_time: 0.004701532
+      total_time: 6.356805337
+    - run: 16
+      multiplication_time: 6.478017638
+      norm_time: 0.004870012
+      total_time: 6.482887650
+    - run: 17
+      multiplication_time: 6.409592735
+      norm_time: 0.005037246
+      total_time: 6.414629981
+    - run: 18
+      multiplication_time: 7.061938051
+      norm_time: 0.005040142
+      total_time: 7.066978193
+    - run: 19
+      multiplication_time: 6.714388139
+      norm_time: 0.005229841
+      total_time: 6.719617980
+    - run: 20
+      multiplication_time: 6.342480070
+      norm_time: 0.004981028
+      total_time: 6.347461098
+    - run: 21
+      multiplication_time: 6.381674491
+      norm_time: 0.004924617
+      total_time: 6.386599108
+    - run: 22
+      multiplication_time: 6.584295148
+      norm_time: 0.004823440
+      total_time: 6.589118588
+    - run: 23
+      multiplication_time: 7.180321996
+      norm_time: 0.005145344
+      total_time: 7.185467340
+    - run: 24
+      multiplication_time: 6.661083479
+      norm_time: 0.004884840
+      total_time: 6.665968319
+    - run: 25
+      multiplication_time: 6.502008540
+      norm_time: 0.004809702
+      total_time: 6.506818242
+    - run: 26
+      multiplication_time: 6.630272314
+      norm_time: 0.004748249
+      total_time: 6.635020563
+    - run: 27
+      multiplication_time: 6.861345230
+      norm_time: 0.004892225
+      total_time: 6.866237455
+    - run: 28
+      multiplication_time: 7.609400965
+      norm_time: 0.005089083
+      total_time: 7.614490048
+    - run: 29
+      multiplication_time: 7.352499828
+      norm_time: 0.004876134
+      total_time: 7.357375962
+    - run: 30
+      multiplication_time: 6.568401187
+      norm_time: 0.005564252
+      total_time: 6.573965439
+    - run: 31
+      multiplication_time: 7.151909999
+      norm_time: 0.005230741
+      total_time: 7.157140740
+    - run: 32
+      multiplication_time: 7.009556808
+      norm_time: 0.004499636
+      total_time: 7.014056444
+    - run: 33
+      multiplication_time: 7.180812645
+      norm_time: 0.004640331
+      total_time: 7.185452976
+    - run: 34
+      multiplication_time: 7.292394332
+      norm_time: 0.004817431
+      total_time: 7.297211763
+    - run: 35
+      multiplication_time: 6.477334038
+      norm_time: 0.005013445
+      total_time: 6.482347483
+    - run: 36
+      multiplication_time: 6.842628965
+      norm_time: 0.004791170
+      total_time: 6.847420135
+    - run: 37
+      multiplication_time: 7.054295041
+      norm_time: 0.004772235
+      total_time: 7.059067276
+    - run: 38
+      multiplication_time: 7.163766803
+      norm_time: 0.009232369
+      total_time: 7.172999172
+    - run: 39
+      multiplication_time: 7.403978036
+      norm_time: 0.004894033
+      total_time: 7.408872069
+    - run: 40
+      multiplication_time: 6.460036798
+      norm_time: 0.005161335
+      total_time: 6.465198133
+    - run: 41
+      multiplication_time: 7.300103377
+      norm_time: 0.004418031
+      total_time: 7.304521408
+    - run: 42
+      multiplication_time: 7.477963767
+      norm_time: 0.004834131
+      total_time: 7.482797898
+    - run: 43
+      multiplication_time: 6.694773419
+      norm_time: 0.005084969
+      total_time: 6.699858388
+    - run: 44
+      multiplication_time: 7.227275367
+      norm_time: 0.004534490
+      total_time: 7.231809857
+    - run: 45
+      multiplication_time: 7.898845358
+      norm_time: 0.005183960
+      total_time: 7.904029318
+    - run: 46
+      multiplication_time: 6.563348177
+      norm_time: 0.004972633
+      total_time: 6.568320810
+    - run: 47
+      multiplication_time: 6.422720563
+      norm_time: 0.004934031
+      total_time: 6.427654594
+    - run: 48
+      multiplication_time: 7.012794744
+      norm_time: 0.005467732
+      total_time: 7.018262476
+    - run: 49
+      multiplication_time: 6.676330843
+      norm_time: 0.005183527
+      total_time: 6.681514370
+    - run: 50
+      multiplication_time: 7.817831621
+      norm_time: 0.004648823
+      total_time: 7.822480444
+- benchmark_results:
+  metadata:
+    implementation: "threaded"
+    matrix_size: 4096
+    block_size: 512
+    num_threads: 16
+    num_repeats: 50
+    timestamp: 1762014626
+  statistics:
+    multiplication:
+      average_time: 9.634899861
+      min_time: 9.078215795
+      max_time: 13.411929845
+    norm_computation:
+      average_time: 0.005635796
+      min_time: 0.005323719
+      max_time: 0.006119561
+    total:
+      average_time: 9.640535658
+      min_time: 9.083539514
+      max_time: 13.418049406
+  individual_runs:
+    - run: 1
+      multiplication_time: 13.411929845
+      norm_time: 0.005608717
+      total_time: 13.417538562
+    - run: 2
+      multiplication_time: 10.540918766
+      norm_time: 0.005543206
+      total_time: 10.546461972
+    - run: 3
+      multiplication_time: 10.456217237
+      norm_time: 0.005416839
+      total_time: 10.461634076
+    - run: 4
+      multiplication_time: 11.501394925
+      norm_time: 0.005420528
+      total_time: 11.506815453
+    - run: 5
+      multiplication_time: 11.311848021
+      norm_time: 0.005868134
+      total_time: 11.317716155
+    - run: 6
+      multiplication_time: 11.003445599
+      norm_time: 0.005801808
+      total_time: 11.009247407
+    - run: 7
+      multiplication_time: 9.825570735
+      norm_time: 0.005835785
+      total_time: 9.831406520
+    - run: 8
+      multiplication_time: 9.638407982
+      norm_time: 0.006117633
+      total_time: 9.644525615
+    - run: 9
+      multiplication_time: 9.155804729
+      norm_time: 0.005479396
+      total_time: 9.161284125
+    - run: 10
+      multiplication_time: 9.439106317
+      norm_time: 0.005484529
+      total_time: 9.444590846
+    - run: 11
+      multiplication_time: 9.559808046
+      norm_time: 0.005772045
+      total_time: 9.565580091
+    - run: 12
+      multiplication_time: 9.705833140
+      norm_time: 0.006119561
+      total_time: 9.711952701
+    - run: 13
+      multiplication_time: 9.299553779
+      norm_time: 0.005732624
+      total_time: 9.305286403
+    - run: 14
+      multiplication_time: 9.385251554
+      norm_time: 0.005667224
+      total_time: 9.390918778
+    - run: 15
+      multiplication_time: 9.318362354
+      norm_time: 0.005648524
+      total_time: 9.324010878
+    - run: 16
+      multiplication_time: 9.396624448
+      norm_time: 0.005332723
+      total_time: 9.401957171
+    - run: 17
+      multiplication_time: 9.235757557
+      norm_time: 0.005465558
+      total_time: 9.241223115
+    - run: 18
+      multiplication_time: 9.337451570
+      norm_time: 0.005580572
+      total_time: 9.343032142
+    - run: 19
+      multiplication_time: 9.971526997
+      norm_time: 0.005881721
+      total_time: 9.977408718
+    - run: 20
+      multiplication_time: 9.354005663
+      norm_time: 0.005740422
+      total_time: 9.359746085
+    - run: 21
+      multiplication_time: 9.315313335
+      norm_time: 0.005691323
+      total_time: 9.321004658
+    - run: 22
+      multiplication_time: 9.090818351
+      norm_time: 0.005792324
+      total_time: 9.096610675
+    - run: 23
+      multiplication_time: 9.392910359
+      norm_time: 0.005994436
+      total_time: 9.398904795
+    - run: 24
+      multiplication_time: 9.166524808
+      norm_time: 0.005605116
+      total_time: 9.172129924
+    - run: 25
+      multiplication_time: 9.246098561
+      norm_time: 0.005566287
+      total_time: 9.251664848
+    - run: 26
+      multiplication_time: 9.196116454
+      norm_time: 0.005543119
+      total_time: 9.201659573
+    - run: 27
+      multiplication_time: 9.817419935
+      norm_time: 0.005323719
+      total_time: 9.822743654
+    - run: 28
+      multiplication_time: 9.913479741
+      norm_time: 0.005497406
+      total_time: 9.918977147
+    - run: 29
+      multiplication_time: 9.869660113
+      norm_time: 0.005640201
+      total_time: 9.875300314
+    - run: 30
+      multiplication_time: 9.343296593
+      norm_time: 0.005484681
+      total_time: 9.348781274
+    - run: 31
+      multiplication_time: 9.361536128
+      norm_time: 0.005662421
+      total_time: 9.367198549
+    - run: 32
+      multiplication_time: 9.354238362
+      norm_time: 0.005628219
+      total_time: 9.359866581
+    - run: 33
+      multiplication_time: 9.094129695
+      norm_time: 0.005508218
+      total_time: 9.099637913
+    - run: 34
+      multiplication_time: 9.407544505
+      norm_time: 0.005356960
+      total_time: 9.412901465
+    - run: 35
+      multiplication_time: 9.361374802
+      norm_time: 0.005479587
+      total_time: 9.366854389
+    - run: 36
+      multiplication_time: 9.183667293
+      norm_time: 0.005530879
+      total_time: 9.189198172
+    - run: 37
+      multiplication_time: 9.137143458
+      norm_time: 0.005695415
+      total_time: 9.142838873
+    - run: 38
+      multiplication_time: 9.171121233
+      norm_time: 0.005441415
+      total_time: 9.176562648
+    - run: 39
+      multiplication_time: 9.168720312
+      norm_time: 0.005604218
+      total_time: 9.174324530
+    - run: 40
+      multiplication_time: 9.262826520
+      norm_time: 0.005662018
+      total_time: 9.268488538
+    - run: 41
+      multiplication_time: 9.462064256
+      norm_time: 0.005610786
+      total_time: 9.467675042
+    - run: 42
+      multiplication_time: 9.895579565
+      norm_time: 0.005639513
+      total_time: 9.901219078
+    - run: 43
+      multiplication_time: 9.078215795
+      norm_time: 0.005544314
+      total_time: 9.083760109
+    - run: 44
+      multiplication_time: 9.296601160
+      norm_time: 0.005601415
+      total_time: 9.302202575
+    - run: 45
+      multiplication_time: 9.303437283
+      norm_time: 0.005569616
+      total_time: 9.309006899
+    - run: 46
+      multiplication_time: 9.566909565
+      norm_time: 0.005804885
+      total_time: 9.572714450
+    - run: 47
+      multiplication_time: 9.262599590
+      norm_time: 0.005460773
+      total_time: 9.268060363
+    - run: 48
+      multiplication_time: 9.332973306
+      norm_time: 0.005649778
+      total_time: 9.338623084
+    - run: 49
+      multiplication_time: 9.475894864
+      norm_time: 0.005604612
+      total_time: 9.481499476
+    - run: 50
+      multiplication_time: 9.367957859
+      norm_time: 0.006078614
+      total_time: 9.374036473
