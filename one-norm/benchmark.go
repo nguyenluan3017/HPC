@@ -139,6 +139,7 @@ func main() {
 	done := make(chan bool)	
 	execPath := flag.String("exec", "./bin/norm", "Path to exectuable to benchmark")
 	outputDir := flag.String("output-dir", "/tmp", "Output directory for benchmark results")
+	numberOfThreads := sysinfo.logicalCores / 2	
 
 	flag.Parse()
 
@@ -156,12 +157,14 @@ func main() {
 
 	go runThreadedTest(TestConfig{
 		blockSize: blockSize,
-		numberOfThreads: &sysinfo.logicalCores,
+		numberOfThreads: &numberOfThreads,
 		numberOfIterations: numberOfIterations,
 		execPath: *execPath,
 		done: done,
 		outputFile: threadedOutputFile,
 	})
+
+	<- done	
 
 	go runSerialTest(TestConfig{
 		blockSize: blockSize,
@@ -171,6 +174,5 @@ func main() {
 		outputFile: serialOutputFile,
 	})
 
-	<- done
 	<- done
 }
