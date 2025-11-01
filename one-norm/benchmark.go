@@ -3,13 +3,21 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"math"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v3"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/plotutil"
+	"gonum.org/v1/plot/vg"
 )
 
 const (
@@ -20,10 +28,11 @@ const (
 type BenchmarkFlags struct {
 	execPath       *string
 	outputDir      *string
-	resultPath     *string
+	resultsPath     *string
+	imageDirPath      *string
 	enablePlotting *bool
 	verbose        *bool
-	help          *bool
+	help           *bool
 }
 
 type CPUInfo struct {
@@ -39,29 +48,68 @@ type TestConfiguration struct {
 	numberOfIterations uint
 	execPath           string
 	outputFile         *os.File
-	done               chan<-bool
+	done               chan<- bool
+}
+
+type BenchmarkResults []BenchmarkResult
+
+type BenchmarkResult struct {
+	Metadata       Metadata        `yaml:"metadata"`
+	Stats          Statistics      `yaml:"statistics"`
+	IndividualRuns []IndividualRun `yaml:"individual_runs"`
+}
+
+type Metadata struct {
+	Impl       string `yaml:"implementation"`
+	MatrixSize uint   `yaml:"matrix_size"`
+	BlockSize  uint   `yaml:"block_size"`
+	NumThreads uint   `yaml:"num_threads"`
+	NumRepeats uint   `yaml:"num_repeats"`
+	Timestamp  uint64 `yaml:"timestamp"`
+}
+
+type Statistics struct {
+	Multiplication  TimingStats `yaml:"multiplication"`
+	NormComputation TimingStats `yaml:"norm_computation"`
+	Total           TimingStats `yaml:"total"`
+}
+
+type TimingStats struct {
+	AvgTime float64 `yaml:"average_time"`
+	MinTime float64 `yaml:"min_time"`
+	MaxTime float64 `yaml:"max_time"`
+}
+
+type IndividualRun struct {
+	Run                int     `yaml:"run"`
+	MultiplicationTime float64 `yaml:"multiplication_time"`
+	NormTime           float64 `yaml:"norm_time"`
+	TotalTime          float64 `yaml:"total_time"`
 }
 
 func (options *BenchmarkFlags) parse() {
 	// Initialize the flag pointers
-	options.execPath = flag.String("exec", "./bin/norm", 
+	options.execPath = flag.String("exec", "./bin/norm",
 		"Path to executable to benchmark")
-	
-	options.outputDir = flag.String("output-dir", "./results", 
+
+	options.outputDir = flag.String("output-dir", "./results",
 		"Output directory for benchmark results")
-	
-	options.resultPath = flag.String("result-path", "./results", 
+
+	options.resultsPath = flag.String("results-path", "./results",
 		"Path to existing benchmark results for plotting (used with -plot flag)")
-	
-	options.enablePlotting = flag.Bool("plot", false, 
+
+	options.imageDirPath = flag.String("images-path", "./images",
+		"Output directory for generated plot images")
+
+	options.enablePlotting = flag.Bool("plot", false,
 		"Enable plotting mode - creates charts from existing results instead of running benchmarks")
-	
-	options.verbose = flag.Bool("v", false, 
+
+	options.verbose = flag.Bool("v", false,
 		"Enable verbose output during benchmarking")
-	
-	options.help = flag.Bool("help", false, 
+
+	options.help = flag.Bool("help", false,
 		"Show this help message and exit")
-	
+
 	flag.Parse()
 
 	if *options.help {
@@ -92,7 +140,7 @@ func parseSize(sizeStr, unitStr string) (uint, error) {
 
 func (info CPUInfo) getOptimalBlockSize() uint {
 	if maxCacheSize := max(info.l3Cache, info.l2Cache, info.l1dCache); maxCacheSize > 0 {
-		blockSizeSquared := float64(maxCacheSize) / float64(3 * 8)
+		blockSizeSquared := float64(maxCacheSize) / float64(3*8)
 		return uint(math.Sqrt(blockSizeSquared))
 	}
 
@@ -241,10 +289,10 @@ func ensureOutputFile(path string) *os.File {
 }
 
 func benchmark(blockSize uint, numberOfThreads uint, numberOfIterations uint, execPath string, outputDir string, done chan<- bool) {
-	threadedOutputFile := ensureOutputFile(outputDir+"/threaded_results.yaml")
+	threadedOutputFile := ensureOutputFile(outputDir + "/threaded_results.yaml")
 	defer threadedOutputFile.Close()
 
-	serialOutputFile := ensureOutputFile(outputDir+"/serial_results.yaml")
+	serialOutputFile := ensureOutputFile(outputDir + "/serial_results.yaml")
 	defer serialOutputFile.Close()
 
 	go runThreadedTest(TestConfiguration{
@@ -265,8 +313,83 @@ func benchmark(blockSize uint, numberOfThreads uint, numberOfIterations uint, ex
 	})
 }
 
-func plotResults() {
+func readBenchmarkResults(resultPath string) (BenchmarkResults, error) {
+	file, err := os.Open(resultPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
 
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	var results BenchmarkResults
+	err = yaml.Unmarshal(data, &results)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func plotRuntimeDependenceOnMatricSize(serialResults BenchmarkResults, threadedResults BenchmarkResults, imageDirPath string) {
+    p := plot.New()
+    p.Title.Text = "Runtime vs Matrix Size"
+    p.X.Label.Text = "Matrix Size"
+    p.Y.Label.Text = "Average Execution Time (seconds)"
+
+    // Convert serial results to plot points
+    serialPts := make(plotter.XYs, len(serialResults))
+    for i, result := range serialResults {
+        serialPts[i].X = float64(result.Metadata.MatrixSize)
+        serialPts[i].Y = result.Stats.Total.AvgTime
+    }
+
+    // Convert threaded results to plot points
+    threadedPts := make(plotter.XYs, len(threadedResults))
+    for i, result := range threadedResults {
+        threadedPts[i].X = float64(result.Metadata.MatrixSize)
+        threadedPts[i].Y = result.Stats.Total.AvgTime
+    }
+
+    // Add lines to plot
+    err := plotutil.AddLinePoints(p,
+        "Serial", serialPts,
+        "Threaded", threadedPts)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Create the full path for the image file
+    imagePath := filepath.Join(imageDirPath, "runtime_vs_matrix_size.png")
+    
+    // Save the plot
+    if err := p.Save(10*vg.Inch, 6*vg.Inch, imagePath); err != nil {
+        log.Fatal(err)
+    }
+}
+
+func plotResults(serialResultsPath string, threadedResultsPath string, imageDirPath string) {
+    serialResults, err := readBenchmarkResults(serialResultsPath)
+    if err != nil {
+        panic(err)
+    }
+
+    threadedResults, err := readBenchmarkResults(threadedResultsPath)
+    if err != nil {
+        panic(err)
+    }	
+
+    // Ensure the image directory exists
+    os.MkdirAll(imageDirPath, 0755)
+
+    plotRuntimeDependenceOnMatricSize(
+        serialResults, 
+        threadedResults,
+        imageDirPath,
+    )
 }
 
 func main() {
@@ -274,7 +397,7 @@ func main() {
 	sysinfo := getCPUInfo()
 	const blockSize = uint(512)
 	done := make(chan bool)
-	
+
 	// Create and parse flags
 	flags := &BenchmarkFlags{}
 	flags.parse()
@@ -284,13 +407,20 @@ func main() {
 			sysinfo.logicalCores, sysinfo.l1dCache/1024, sysinfo.l2Cache/1024, sysinfo.l3Cache/1024)
 		fmt.Printf("Using executable: %s\n", *flags.execPath)
 		fmt.Printf("Output directory: %s\n", *flags.outputDir)
+		if *flags.enablePlotting {
+			fmt.Printf("Image output directory: %s\n", *flags.imageDirPath)
+		}
 	}
 
 	if *flags.enablePlotting {
 		if *flags.verbose {
-			fmt.Printf("Creating plots from results in: %s\n", *flags.resultPath)
+			fmt.Printf("Creating plots from results in: %s\n", *flags.resultsPath)
 		}
-		plotResults()
+		plotResults(
+			filepath.Join(*flags.resultsPath, "serial.yaml"),
+			filepath.Join(*flags.resultsPath, "threaded.yaml"),
+			*flags.imageDirPath,
+		)
 	} else {
 		if *flags.verbose {
 			fmt.Println("Starting benchmark execution...")
@@ -303,10 +433,10 @@ func main() {
 			*flags.outputDir,
 			done,
 		)
-		
+
 		<-done
 		<-done
-		
+
 		if *flags.verbose {
 			fmt.Println("Benchmark completed!")
 		}

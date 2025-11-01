@@ -16,4 +16,5 @@ require (
 	golang.org/x/image v0.25.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	gonum.org/v1/plot v0.16.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

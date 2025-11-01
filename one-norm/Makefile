@@ -26,9 +26,14 @@ benchmark: bin/benchmark bin/norm
 		-exec ./bin/norm
 
 plot-results: ./results/serial.yaml ./results/threaded.yaml	bin/benchmark
+	mkdir -p ./results
+	mkdir -p ./img
 	./bin/benchmark \
-		-results-path ./results
+		-results-path ./results \
+		-images-path ./img \
 		-plot
 
 clean: ./bin
 	rm -rfv ./bin
+	rm -rfv ./out
+	rm -rfv ./img
