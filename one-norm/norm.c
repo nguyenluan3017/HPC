@@ -129,7 +129,7 @@ void show_help(const char *program_name)
     printf("  - Matrix size must be positive\n");
     printf("  - Min value must be ≤ max value\n");
     printf("  - Block size must evenly divide matrix size\n");
-    printf("  - Number of threads must be ≥ 1 and ≤ matrix size\n");  // Updated line
+    printf("  - Number of threads must be ≥ 1 and ≤ matrix size\n"); // Updated line
     printf("  - Number of repeats must be > 0\n");
     printf("  - Serial and threaded implementations require valid block size\n");
     printf("  - Threaded implementation requires valid number of threads\n");
@@ -386,7 +386,7 @@ void matrix_mult_naive(matrix_t *lhs, matrix_t *rhs, matrix_t *result)
         rhs->size, rhs->size);
 
     const size_t N = lhs->size;
-    
+
     // Zero out the result matrix
     memset(result->data, 0, N * N * sizeof(double));
 
@@ -413,7 +413,7 @@ void matrix_mult_serial(size_t block_size, matrix_t *lhs, matrix_t *rhs, matrix_
         rhs->size, rhs->size);
 
     const size_t N = lhs->size;
-    
+
     // Zero out the result matrix
     memset(result->data, 0, N * N * sizeof(double));
 
@@ -554,7 +554,7 @@ void matrix_mult_threaded(size_t num_threads, size_t block_size, matrix_t *lhs, 
     threads = (pthread_t *)calloc(num_threads, sizeof(pthread_t));
     worker_params = (matrix_mult_worker_params_t *)calloc(num_threads, sizeof(matrix_mult_worker_params_t));
     mutex = (pthread_mutex_t *)calloc(1, sizeof(pthread_mutex_t));
-    
+
     // Initialize mutex
     pthread_mutex_init(mutex, NULL);
 
@@ -565,7 +565,7 @@ void matrix_mult_threaded(size_t num_threads, size_t block_size, matrix_t *lhs, 
         worker_params[i].result = (double *)calloc(N * N, sizeof(double));
         worker_params[i].block_start_index = i * PARTITION_SIZE;
         worker_params[i].block_end_index = MIN((i + 1) * PARTITION_SIZE, N);
-        worker_params[i].block_size = block_size;        
+        worker_params[i].block_size = block_size;
 
         pthread_create(
             &threads[i],

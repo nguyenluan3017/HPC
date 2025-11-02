@@ -1,0 +1,126 @@
+# Solution Explaination
+
+## Serial Matrix Multiplication
+
+The function implementing the serial algorithm is `matrix_mult_serial(size_t, matrix_t *, matrix_t *, matrix_t *)`. The algorithm includes the three nested four `kij` loop. It runs in $O(n^3)$ time-complexity.
+
+Four optimization techniques are applied to the serial implementation:
+
+### Loop tiling
+
+The three outter loops of `bi`, `bj`, and `bk` browse through $\lceil\frac{\text{Matrix Size}}{\text{Block size}}\rceil$ blocks. The block size is optimially selected to maximize cache hits.
+
+```c
+for (size_t bi = 0; bi < N; bi += block_size)
+{
+    for (size_t bj = 0; bj < N; bj += block_size)
+    {
+        for (size_t bk = 0; bk < N; bk += block_size)
+        {
+            /*
+              ... Inner implementation (see kij ordering) ...
+            */
+        }
+    }
+}
+```
+
+![Block Selection](./block_mult.png)
+
+### `kij` ordering
+
+The simplified `kij` implementation is as below:
+
+```c
+for (k = 0; k < n; k++) {
+    for (i = 0; i < n; i++>) {
+        int x = A[i][k];
+        for (j = 0; j < n; j++) {
+            C[i][j] = x * B[k][j];
+        }
+    }
+}
+
+```
+
+![kij ordering](./kij_ordering.png)
+
+In the inner most loop `j`, every elements in `C[i, *]` and `B[k, *]` are accessed `block_size` times. The temporary locality is improved by allowing CPU to efficiently cache row `C[i]` and row `B[k]`. To avoid multiple pointer access to A[i][k], we store `A[i][k]` value to a temporary variable `x`. This technique enhances spatial locality and has cache miss rate in `B` and `C` of $\frac{1}{\text{block size}}$.
+
+The detailed implemenation is provided as below:
+
+```c
+const size_t i_end = MIN(bi + block_size, N);
+const size_t j_end = MIN(bj + block_size, N);
+const size_t k_end = MIN(bk + block_size, N);
+
+for (size_t k = bk; k < k_end; k++)
+{
+    for (size_t i = bi; i < i_end; i++)
+    {
+        register const double lhs_data = lhs->data[i * N + k];
+        register double *rhs_row = &rhs->data[k * N];
+        register double *result_row = &result->data[i * N];
+        register const size_t limit = j_end - ((j_end - bj) % 4);
+        register size_t j;
+
+        for (j = bj; j < limit; j += 4)
+        {
+            result_row[j] += lhs_data * rhs_row[j];
+            result_row[j + 1] += lhs_data * rhs_row[j + 1];
+            result_row[j + 2] += lhs_data * rhs_row[j + 2];
+            result_row[j + 3] += lhs_data * rhs_row[j + 3];
+        }
+
+        for (; j < j_end; j++)
+        {
+            result_row[j] += lhs_data * rhs_row[j];
+        }
+    }
+}
+```
+
+### Register variables
+
+```c
+register const double lhs_data = lhs->data[i * N + k];
+register double *rhs_row = &rhs->data[k * N];
+register double *result_row = &result->data[i * N];
+register const size_t limit = j_end - ((j_end - bj) % 4);
+register size_t j;
+```
+
+We store critical variables for the multiplication in register for fast access.
+
+| Variable | Description |
+|---|---|
+| `lhs_data` | The fixed cell in matrix `A[i][j]`. `lhs` stands for left hand side operands corresponding to matrix `A` in the operation `A * B` |
+| `rhs_row` | The $k^{th}$ row of matrix  $B$. `rhs` stands for right hand side. |
+| `result_row` | The $i^{th}$ row of result matrix $C$ |
+
+### Iteration unrolling
+
+We expand a loop to do multiple operations in each iteration. This improves performance by reducing the overhead of loop control.
+
+
+
+```c
+for (j = bj; j < limit; j += 4)
+{
+    result_row[j] += lhs_data * rhs_row[j];
+    result_row[j + 1] += lhs_data * rhs_row[j + 1];
+    result_row[j + 2] += lhs_data * rhs_row[j + 2];
+    result_row[j + 3] += lhs_data * rhs_row[j + 3];
+}
+
+for (; j < j_end; j++)
+{
+    result_row[j] += lhs_data * rhs_row[j];
+}
+```
+
+
+# References
+
+- [Cache Effect in Matrix Multiplication. Tutorial for Assignment 1](https://csmoodle.ucd.ie/moodle/pluginfile.php/211222/mod_resource/content/1/tutorialForAssign1.pdf)
+- [Wikipedia - Loop unrolling](https://en.wikipedia.org/wiki/Loop_unrolling)
