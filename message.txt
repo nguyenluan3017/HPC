@@ -1,0 +1,277 @@
+❯ VMAGENT_REGISTRY=vmagent.azurecr.io VMAGENT_TAG=latest make docker-build-vmagent
+==================================================
+  Running lint on synth module
+==================================================
+/home/nguyencuong/aks-operator/hack/tools/bin/golangci-lint run --timeout 5m --build-tags vmagent
+export DOCKER_DEFAULT_PLATFORM="linux/amd64" ; \
+export BUILDX_NO_DEFAULT_ATTESTATIONS=1 ; \
+mage vmagent:build
+[INFO]
+Running : docker run -v /home/nguyencuong/aks-operator/ci/vmagent/monitors:/app/lint -v /home/nguyencuong/.azure:/root/.azure -w /app --rm aksinfrapublic.azurecr.io/aksinfra-builders/aks-infra-deployer-adx-mon-linter:v1 yamllint --no-warnings -d {extends: relaxed, rules: {new-line-at-end-of-file: { level: warning }, trailing-spaces: { level: warning }}} /app/lint
+[DEBU] linting with alerter lint in folder ci/vmagent/monitors
+[DEBU] running as cloud=AzureCloud region=intv2-eastus
+[INFO]
+Running : docker run -v /home/nguyencuong/aks-operator/ci/vmagent/monitors:/app/lint -v /home/nguyencuong/.azure:/root/.azure -w /app --rm aksinfrapublic.azurecr.io/aksinfra-builders/aks-infra-deployer-adx-mon-linter:v1 ./alerter lint --cloud AzureCloud --region intv2-eastus --kusto-endpoint AKSprod=https://aksrpblintv2.eastus.kusto.windows.net --kusto-endpoint AKSinfra=https://aksinfrablintv2.eastus.kusto.windows.net --kusto-endpoint AKSccplogs=https://aksccplogsblintv2.eastus.kusto.windows.net --kusto-endpoint AKSmetrics=https://aksminfrablintv2.eastus.kusto.windows.net --kusto-endpoint AKSCCPMetrics=https://aksmccpblintv2.eastus.kusto.windows.net --lint-dir /app/lint --auth-token [SECRET REDACTED]
+{"ts":"2025-11-03T16:10:47.200170Z","lvl":"INF","msg":"Using tag region=intv2-eastus"}
+{"ts":"2025-11-03T16:10:47.200298Z","lvl":"INF","msg":"Using tag cloud=AzureCloud"}
+{"ts":"2025-11-03T16:10:47.200431Z","lvl":"INF","msg":"reading file \"/app/lint/releasegate-vmagent-alert-migration-conflict.yaml\""}
+{"ts":"2025-11-03T16:10:47.203743Z","lvl":"INF","msg":"found rule \"releasegate-vmagent-alert-migration-conflict\""}
+{"ts":"2025-11-03T16:10:47.203916Z","lvl":"INF","msg":"reading file \"/app/lint/releasegate-vmagent-composition-timeout.yaml\""}
+{"ts":"2025-11-03T16:10:47.204417Z","lvl":"INF","msg":"found rule \"releasegate-vmagent-composition-timeout\""}
+{"ts":"2025-11-03T16:10:47.204482Z","lvl":"INF","msg":"reading file \"/app/lint/releasegate-vmagent-synthesizer-error.yaml\""}
+{"ts":"2025-11-03T16:10:47.204733Z","lvl":"INF","msg":"found rule \"releasegate-vmagent-synthesizer-error\""}
+{"ts":"2025-11-03T16:10:47.204768Z","lvl":"INF","msg":"reading file \"/app/lint/releasegate-vmagent-target-reachable.yaml\""}
+{"ts":"2025-11-03T16:10:47.205049Z","lvl":"INF","msg":"found rule \"releasegate-vmagent-target-reachable\""}
+{"ts":"2025-11-03T16:10:47.205066Z","lvl":"INF","msg":"Linting rules from path=/app/lint"}
+{"ts":"2025-11-03T16:10:47.205118Z","lvl":"INF","msg":"Using token authentication"}
+{"ts":"2025-11-03T16:10:47.205235Z","lvl":"INF","msg":"Executing adx-mon/releasegate-vmagent-alert-migration-conflict on https://aksinfrablintv2.eastus.kusto.windows.net/AKSinfra"}
+{"ts":"2025-11-03T16:10:47.849521Z","lvl":"INF","msg":"Completed adx-mon/releasegate-vmagent-alert-migration-conflict in 644.307508ms"}
+{"ts":"2025-11-03T16:10:47.849589Z","lvl":"INF","msg":"Query for adx-mon/releasegate-vmagent-alert-migration-conflict completed with 0 entries found"}
+{"ts":"2025-11-03T16:10:47.849635Z","lvl":"INF","msg":"Executing adx-mon/releasegate-vmagent-composition-timeout on https://aksminfrablintv2.eastus.kusto.windows.net/AKSmetrics"}
+{"ts":"2025-11-03T16:10:48.449204Z","lvl":"INF","msg":"Completed adx-mon/releasegate-vmagent-composition-timeout in 599.586596ms"}
+{"ts":"2025-11-03T16:10:48.449247Z","lvl":"INF","msg":"Query for adx-mon/releasegate-vmagent-composition-timeout completed with 0 entries found"}
+{"ts":"2025-11-03T16:10:48.449281Z","lvl":"INF","msg":"Executing adx-mon/releasegate-vmagent-synthesizer-error on https://aksrpblintv2.eastus.kusto.windows.net/AKSprod"}
+{"ts":"2025-11-03T16:10:49.007148Z","lvl":"INF","msg":"Completed adx-mon/releasegate-vmagent-synthesizer-error in 557.878233ms"}
+{"ts":"2025-11-03T16:10:49.007181Z","lvl":"INF","msg":"Query for adx-mon/releasegate-vmagent-synthesizer-error completed with 0 entries found"}
+{"ts":"2025-11-03T16:10:49.007246Z","lvl":"INF","msg":"Executing adx-mon/releasegate-vmagent-target-reachable on https://aksmccpblintv2.eastus.kusto.windows.net/AKSCCPMetrics"}
+{"ts":"2025-11-03T16:10:49.832539Z","lvl":"INF","msg":"Completed adx-mon/releasegate-vmagent-target-reachable in 825.334413ms"}
+{"ts":"2025-11-03T16:10:49.832591Z","lvl":"INF","msg":"Query for adx-mon/releasegate-vmagent-target-reachable completed with 0 entries found"}
+[INFO]
+Running : docker build . -f ci/vmagent/build/Dockerfile -t vmagent--img --build-arg ARCH=amd64 --build-arg COMPONENT=vmagent --build-arg VERSION=1.master.20251103-9c6bc105 --build-arg [SECRET REDACTED] --build-arg [SECRET REDACTED] --build-arg GOPRIVATE='goms.io/aks/*,go.goms.io/aks/*,go.goms.io/caravel,go.goms.io/fleet*' --build-arg GONOPROXY='none' --progress=plain --secret id=GOPROXY
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 327B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for aksinfrapublic.azurecr.io/aksinfra-builders/go-base-azl3:1.24
+#2 DONE 3.6s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [builder 1/6] FROM aksinfrapublic.azurecr.io/aksinfra-builders/go-base-azl3:1.24@sha256:7a58b7bcdeb5d30b8eaf8f89939b7da55e08d018fe75f583ba269afccb99d9e7
+#4 resolve aksinfrapublic.azurecr.io/aksinfra-builders/go-base-azl3:1.24@sha256:7a58b7bcdeb5d30b8eaf8f89939b7da55e08d018fe75f583ba269afccb99d9e7 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 74.75MB 0.6s done
+#5 DONE 0.6s
+
+#6 [builder 3/6] WORKDIR /app
+#6 CACHED
+
+#7 [builder 4/6] COPY . .
+#7 CACHED
+
+#8 [builder 2/6] WORKDIR /app/dist
+#8 CACHED
+
+#9 [builder 5/6] RUN rm -rf hack/tools/bin
+#9 CACHED
+
+#10 [builder 6/6] RUN --mount=type=secret,id=GOPROXY GOPROXY=$(cat /run/secrets/GOPROXY) make package-vmagent
+#10 0.193 make: az: No such file or directory
+#10 0.196 ==================================================
+#10 0.196   Installing goreleaser
+#10 0.196 ==================================================
+#10 0.196 hack/prepare-tools.sh install goreleaser github.com/goreleaser/goreleaser@v0.176.0
+#10 0.206 /tmp/tmp.Xcta9zLTbs /app
+#10 0.785 go: downloading github.com/goreleaser/goreleaser v0.176.0
+#10 2.788 go: downloading github.com/caarlos0/ctrlc v1.0.0
+#10 2.788 go: downloading github.com/apex/log v1.9.0
+#10 2.794 go: downloading github.com/fatih/color v1.12.0
+#10 2.795 go: downloading github.com/spf13/cobra v1.2.1
+#10 2.838 go: downloading github.com/goreleaser/nfpm/v2 v2.6.0
+#10 3.095 go: downloading gopkg.in/yaml.v2 v2.4.0
+#10 3.286 go: downloading code.gitea.io/sdk/gitea v0.15.0
+#10 3.333 go: downloading github.com/google/go-github/v35 v35.3.0
+#10 3.338 go: downloading github.com/xanzy/go-gitlab v0.50.3
+#10 3.339 go: downloading golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
+#10 3.393 go: downloading github.com/goreleaser/fileglob v1.2.0
+#10 3.398 go: downloading github.com/caarlos0/go-shellwords v1.0.12
+#10 3.524 go: downloading github.com/imdario/mergo v0.3.12
+#10 3.733 go: downloading github.com/Masterminds/semver/v3 v3.1.1
+#10 3.760 go: downloading github.com/mattn/go-colorable v0.1.8
+#10 3.780 go: downloading github.com/mattn/go-isatty v0.0.12
+#10 3.855 go: downloading github.com/Masterminds/semver v1.5.0
+#10 4.016 go: downloading github.com/spf13/pflag v1.0.5
+#10 4.023 go: downloading github.com/cpuguy83/go-md2man/v2 v2.0.0
+#10 4.049 go: downloading github.com/pkg/errors v0.9.1
+#10 4.090 go: downloading gocloud.dev v0.23.0
+#10 4.918 go: downloading github.com/caarlos0/env/v6 v6.6.2
+#10 4.918 go: downloading github.com/dghubble/go-twitter v0.0.0-20210609183100-2fdbf421508e
+#10 4.920 go: downloading github.com/dghubble/oauth1 v0.7.0
+#10 4.936 go: downloading golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+#10 4.945 go: downloading github.com/AlekSi/pointer v1.1.0
+#10 4.946 go: downloading github.com/goreleaser/chglog v0.1.2
+#10 4.949 go: downloading gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+#10 5.183 go: downloading github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
+#10 5.292 go: downloading github.com/google/rpmpack v0.0.0-20210410105602-e20c988a6f5a
+#10 5.381 go: downloading github.com/sassoftware/go-rpmutils v0.0.0-20190420191620-a8f1baeba37b
+#10 5.411 go: downloading github.com/hashicorp/go-version v1.2.1
+#10 5.539 go: downloading github.com/google/go-querystring v1.0.0
+#10 5.539 go: downloading golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
+#10 5.549 go: downloading github.com/hashicorp/go-cleanhttp v0.5.1
+#10 5.550 go: downloading github.com/hashicorp/go-retryablehttp v0.6.8
+#10 5.597 go: downloading golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
+#10 5.745 go: downloading golang.org/x/sys v0.0.0-20210510120138-977fb7262007
+#10 5.753 go: downloading github.com/russross/blackfriday/v2 v2.0.1
+#10 5.790 go: downloading go.opencensus.io v0.23.0
+#10 6.003 go: downloading cloud.google.com/go v0.81.0
+#10 6.051 go: downloading github.com/google/wire v0.5.0
+#10 6.066 go: downloading google.golang.org/api v0.46.0
+#10 6.066 go: downloading google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
+#10 6.067 go: downloading google.golang.org/grpc v1.38.0
+#10 6.182 go: downloading github.com/Azure/azure-pipeline-go v0.2.3
+#10 6.240 go: downloading github.com/Azure/azure-storage-blob-go v0.13.0
+#10 6.405 go: downloading github.com/Azure/go-autorest/autorest/adal v0.9.13
+#10 6.465 go: downloading github.com/Azure/go-autorest/autorest v0.11.18
+#10 6.600 go: downloading github.com/Azure/go-autorest v14.2.0+incompatible
+#10 6.671 go: downloading github.com/google/uuid v1.2.0
+#10 6.803 go: downloading cloud.google.com/go/storage v1.15.0
+#10 6.803 go: downloading github.com/googleapis/gax-go/v2 v2.0.5
+#10 7.069 go: downloading github.com/aws/aws-sdk-go v1.38.35
+#10 10.98 go: downloading github.com/Azure/azure-sdk-for-go v54.0.0+incompatible
+#10 10.98 go: downloading github.com/Azure/go-autorest/autorest/azure/auth v0.5.7
+#10 10.98 go: downloading github.com/ulikunitz/xz v0.5.10
+#10 10.99 go: downloading golang.org/x/net v0.0.0-20210505214959-0714010a04ed
+#10 10.99 go: downloading github.com/ProtonMail/go-crypto v0.0.0-20210512092938-c05353c2d58c
+#10 11.01 go: downloading github.com/cenkalti/backoff v2.1.1+incompatible
+#10 11.23 go: downloading github.com/dghubble/sling v1.3.0
+#10 11.25 go: downloading github.com/Masterminds/sprig v2.22.0+incompatible
+#10 11.36 go: downloading github.com/go-git/go-git/v5 v5.3.0
+#10 11.58 go: downloading github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
+#10 11.74 go: downloading github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e
+#10 11.74 go: downloading golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+#10 11.74 go: downloading github.com/shurcooL/sanitized_anchor_name v1.0.0
+#10 11.75 go: downloading github.com/mattn/go-ieproxy v0.0.1
+#10 11.77 go: downloading github.com/golang/protobuf v1.5.2
+#10 11.82 go: downloading github.com/Azure/go-autorest/tracing v0.6.0
+#10 12.00 go: downloading github.com/Azure/go-autorest/autorest/date v0.3.0
+#10 12.00 go: downloading github.com/Azure/go-autorest/logger v0.2.1
+#10 12.01 go: downloading github.com/form3tech-oss/jwt-go v3.2.2+incompatible
+#10 12.02 go: downloading google.golang.org/protobuf v1.26.0
+#10 12.65 go: downloading github.com/Azure/go-autorest/autorest/azure/cli v0.4.2
+#10 12.65 go: downloading github.com/dimchansky/utfbom v1.1.1
+#10 12.65 go: downloading github.com/huandu/xstrings v1.3.2
+#10 12.65 go: downloading github.com/Masterminds/goutils v1.1.1
+#10 12.66 go: downloading github.com/mitchellh/copystructure v1.1.2
+#10 12.78 go: downloading github.com/go-git/go-billy/v5 v5.1.0
+#10 12.95 go: downloading github.com/sergi/go-diff v1.2.0
+#10 12.95 go: downloading github.com/emirpasic/gods v1.12.0
+#10 13.03 go: downloading github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
+#10 13.20 go: downloading github.com/jmespath/go-jmespath v0.4.0
+#10 13.21 go: downloading github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99
+#10 13.22 go: downloading github.com/mitchellh/reflectwalk v1.0.1
+#10 13.34 go: downloading github.com/google/go-cmp v0.5.6
+#10 13.41 go: downloading github.com/go-git/gcfg v1.5.0
+#10 13.42 go: downloading github.com/kevinburke/ssh_config v1.1.0
+#10 13.45 go: downloading github.com/xanzy/ssh-agent v0.3.0
+#10 13.50 go: downloading golang.org/x/text v0.3.6
+#10 13.72 go: downloading gopkg.in/warnings.v0 v0.1.2
+#10 19.13 go: downloading github.com/Azure/go-autorest/autorest/validation v0.3.1
+#10 19.13 go: downloading github.com/Azure/go-autorest/autorest/to v0.4.0
+#10 36.35 /app
+#10 36.36 Done.
+#10 36.36 /app/hack/tools/bin/goreleaser --snapshot --skip-publish --rm-dist --config=.goreleaser-vmagent.yml
+#10 36.37    • releasing...
+#10 36.37    • loading config file       file=.goreleaser-vmagent.yml
+#10 36.37    • loading environment variables
+#10 36.37    • getting and validating git state
+#10 36.40       • building...               commit=9c6bc1058bcd836ba87a590e76da45df5c30e8b4 latest tag=0.2.0-4f7bf3a9f
+#10 36.40       • pipe skipped              error=disabled during snapshot mode
+#10 36.40    • parsing tag
+#10 36.40    • running before hooks
+#10 36.40    • setting defaults
+#10 36.40       • snapshotting
+#10 36.40       • github/gitlab/gitea releases
+#10 36.40       • project name
+#10 36.40       • loading go mod information
+#10 36.40       • building binaries
+#10 36.40       • creating source archive
+#10 36.40       • archives
+#10 36.40       • linux packages
+#10 36.40       • snapcraft packages
+#10 36.40       • calculating checksums
+#10 36.40       • signing artifacts
+#10 36.40       • signing docker images
+#10 36.40       • docker images
+#10 36.40       • docker manifests
+#10 36.40       • artifactory
+#10 36.40       • blobs
+#10 36.40       • homebrew tap formula
+#10 36.40       • scoop manifests
+#10 36.40       • twitter
+#10 36.40       • milestones
+#10 36.41    • snapshotting
+#10 36.41       • building snapshot...      version=master.1762186496-9c6bc1058
+#10 36.41    • checking ./dist
+#10 36.41       • --rm-dist is set, cleaning it up
+#10 36.41    • loading go mod information
+#10 36.42    • writing effective config file
+#10 36.42       • writing                   config=bin/dist-vmagent/config.yaml
+#10 36.42    • generating changelog
+#10 36.42       • pipe skipped              error=not available for snapshots
+#10 36.42    • building binaries
+#10 36.42       • building                  binary=/app/bin/dist-vmagent/synth_linux_amd64/synth
+#10 107.3    ⨯ release failed after 72.49s error=failed to build for linux_amd64: exit status 1: go: downloading go.goms.io/aks/rp/ccp/registration v0.1.26
+#10 107.3 go: downloading go.goms.io/aks/rp/protos/hcp v1.63.3
+#10 107.3 go: downloading github.com/Azure/eno v0.1.30
+#10 107.3 go: downloading go.goms.io/aks/rp/protos/overlaymgr v0.0.5
+#10 107.3 go: downloading go.goms.io/aks/rp/toolkit/eno v0.2.0
+#10 107.3 go: downloading k8s.io/apimachinery v0.33.1
+#10 107.3 go: downloading kcl-lang.io/kcl-go v0.11.3
+#10 107.3 go: downloading sigs.k8s.io/controller-runtime v0.21.0
+#10 107.3 go: downloading github.com/Azure/redact v0.0.6
+#10 107.3 go: downloading k8s.io/kubectl v0.33.1
+#10 107.3 go: downloading k8s.io/api v0.33.1
+#10 107.3 go: downloading k8s.io/client-go v0.33.1
+#10 107.3 go: downloading github.com/gogo/protobuf v1.3.2
+#10 107.3 /root/go/pkg/mod/github.com/!azure/eno@v0.1.30/pkg/krm/functions/api/v1/resource_list.go:4:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/github.com/!azure/eno@v0.1.30/pkg/krm/functions/api/v1/zz_generated.deepcopy.go:10:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/github.com/!azure/eno@v0.1.30/pkg/krm/functions/api/v1/register.go:4:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/github.com/!azure/eno@v0.1.30/pkg/function/fs.go:9:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/k8s.io/api@v0.33.1/authentication/v1/register.go:20:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/k8s.io/api@v0.33.1/authentication/v1/generated.pb.go:35:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/k8s.io/api@v0.33.1/core/v1/generated.pb.go:29:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/k8s.io/api@v0.33.1/core/v1/types.go:23:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/k8s.io/kubectl@v0.33.1/pkg/scheme/install.go:51:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/k8s.io/kubectl@v0.33.1/pkg/scheme/scheme.go:22:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/k8s.io/kubectl@v0.33.1/pkg/scheme/install.go:53:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/k8s.io/api@v0.33.1/resource/v1alpha3/types.go:25:2: k8s.io/apimachinery@v0.33.1: Get "https://notinuse:***@goproxyprod.goms.io/k8s.io/apimachinery/@v/v0.33.1.zip": EOF
+#10 107.3 /root/go/pkg/mod/github.com/!azure/eno@v0.1.30/pkg/function/fs.go:10:2: sigs.k8s.io/controller-runtime@v0.21.0: Get "https://notinuse:***@goproxyprod.goms.io/sigs.k8s.io/controller-runtime/@v/v0.21.0.zip": EOF
+#10 107.3 eno_inputs.go:8:2: go.goms.io/aks/rp/ccp/registration@v0.1.26: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/ccp/registration/@v/v0.1.26.zip": EOF
+#10 107.3 autoscaler.go:11:2: go.goms.io/aks/rp/protos/hcp@v1.63.3: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/protos/hcp/@v/v1.63.3.zip": EOF
+#10 107.3 toggle.go:10:2: go.goms.io/aks/rp/protos/hcp@v1.63.3: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/protos/hcp/@v/v1.63.3.zip": EOF
+#10 107.3 eno_inputs.go:10:2: go.goms.io/aks/rp/protos/hcp@v1.63.3: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/protos/hcp/@v/v1.63.3.zip": EOF
+#10 107.3 eno_inputs.go:12:2: go.goms.io/aks/rp/toolkit/eno@v0.2.0: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/toolkit/eno/@v/v0.2.0.zip": EOF
+#10 107.3 main.go:11:2: kcl-lang.io/kcl-go@v0.11.3: Get "https://notinuse:***@goproxyprod.goms.io/kcl-lang.io/kcl-go/@v/v0.11.3.zip": EOF
+#10 107.3 main.go:12:2: kcl-lang.io/kcl-go@v0.11.3: Get "https://notinuse:***@goproxyprod.goms.io/kcl-lang.io/kcl-go/@v/v0.11.3.zip": EOF
+#10 107.3 main.go:13:2: kcl-lang.io/kcl-go@v0.11.3: Get "https://notinuse:***@goproxyprod.goms.io/kcl-lang.io/kcl-go/@v/v0.11.3.zip": EOF
+#10 107.3
+#10 107.3 make: *** [Makefile:534: package-vmagent] Error 1
+#10 ERROR: process "/bin/sh -c GOPROXY=$(cat /run/secrets/GOPROXY) make package-vmagent" did not complete successfully: exit code: 2
+------
+ > [builder 6/6] RUN --mount=type=secret,id=GOPROXY GOPROXY=$(cat /run/secrets/GOPROXY) make package-vmagent:
+107.3 eno_inputs.go:8:2: go.goms.io/aks/rp/ccp/registration@v0.1.26: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/ccp/registration/@v/v0.1.26.zip": EOF
+107.3 autoscaler.go:11:2: go.goms.io/aks/rp/protos/hcp@v1.63.3: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/protos/hcp/@v/v1.63.3.zip": EOF
+107.3 toggle.go:10:2: go.goms.io/aks/rp/protos/hcp@v1.63.3: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/protos/hcp/@v/v1.63.3.zip": EOF
+107.3 eno_inputs.go:10:2: go.goms.io/aks/rp/protos/hcp@v1.63.3: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/protos/hcp/@v/v1.63.3.zip": EOF
+107.3 eno_inputs.go:12:2: go.goms.io/aks/rp/toolkit/eno@v0.2.0: Get "https://notinuse:***@goproxyprod.goms.io/go.goms.io/aks/rp/toolkit/eno/@v/v0.2.0.zip": EOF
+107.3 main.go:11:2: kcl-lang.io/kcl-go@v0.11.3: Get "https://notinuse:***@goproxyprod.goms.io/kcl-lang.io/kcl-go/@v/v0.11.3.zip": EOF
+107.3 main.go:12:2: kcl-lang.io/kcl-go@v0.11.3: Get "https://notinuse:***@goproxyprod.goms.io/kcl-lang.io/kcl-go/@v/v0.11.3.zip": EOF
+107.3 main.go:13:2: kcl-lang.io/kcl-go@v0.11.3: Get "https://notinuse:***@goproxyprod.goms.io/kcl-lang.io/kcl-go/@v/v0.11.3.zip": EOF
+107.3
+107.3 make: *** [Makefile:534: package-vmagent] Error 1
+------
+Dockerfile:14
+--------------------
+  12 |     RUN rm -rf hack/tools/bin
+  13 |
+  14 | >>> RUN --mount=type=secret,id=GOPROXY GOPROXY=$(cat /run/secrets/GOPROXY) make package-vmagent
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c GOPROXY=$(cat /run/secrets/GOPROXY) make package-vmagent" did not complete successfully: exit code: 2
+Error: error building binary: running "docker build . -f ci/vmagent/build/Dockerfile -t vmagent--img --build-arg ARCH=amd64 --build-arg COMPONENT=vmagent --build-arg VERSION=1.master.20251103-9c6bc105 --build-arg AKS_GOPROXY_TOKEN=[REDACTED] --build-arg GOPROXY='https://notinuse:[REDACTED]@goproxyprod.goms.io' --build-arg GOPRIVATE='goms.io/aks/*,go.goms.io/aks/*,go.goms.io/caravel,go.goms.io/fleet*' --build-arg GONOPROXY='none' --progress=plain --secret id=GOPROXY" failed with exit code 1
+make: *** [Makefile:498: docker-build-vmagent] Error 1
