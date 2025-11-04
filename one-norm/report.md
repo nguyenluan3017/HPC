@@ -1,12 +1,18 @@
 # Solution Explaination
 
-## Serial Matrix Multiplication
+## Serial Implementation
+
+### Norm Calculation
+
+
+
+### Matrix Multiplication
 
 The function implementing the serial algorithm is `matrix_mult_serial(size_t, matrix_t *, matrix_t *, matrix_t *)`. The algorithm includes the three nested four `kij` loop. It runs in $O(n^3)$ time-complexity.
 
 Four optimization techniques are applied to the serial implementation:
 
-### Loop tiling
+#### Loop tiling
 
 The three outter loops of `bi`, `bj`, and `bk` browse through $\lceil\frac{\text{Matrix Size}}{\text{Block size}}\rceil$ blocks. The block size is optimially selected to maximize cache hits.
 
@@ -27,7 +33,7 @@ for (size_t bi = 0; bi < N; bi += block_size)
 
 ![Block Selection](./block_mult.png)
 
-### `kij` ordering
+#### `kij` ordering
 
 The simplified `kij` implementation is as below:
 
@@ -80,7 +86,7 @@ for (size_t k = bk; k < k_end; k++)
 }
 ```
 
-### Register variables
+#### Register variables
 
 ```c
 register const double lhs_data = lhs->data[i * N + k];
@@ -98,11 +104,18 @@ We store critical variables for the multiplication in register for fast access.
 | `rhs_row` | The $k^{th}$ row of matrix  $B$. `rhs` stands for right hand side. |
 | `result_row` | The $i^{th}$ row of result matrix $C$ |
 
-### Iteration unrolling
+#### Iteration unrolling
 
-We expand a loop to do multiple operations in each iteration. This improves performance by reducing the overhead of loop control.
+We expand a loop to do multiple operations in each iteration. This improves performance by reducing the overhead of loop control. The initial loop is
 
+```c
+for (j = bj; j < j_end; j++)
+{
+    result_row[j] += lhs_data * rhs_row[j];
+}
+```
 
+By applying iteration unrolling, we process 4 elements per iteration:
 
 ```c
 for (j = bj; j < limit; j += 4)
@@ -119,6 +132,70 @@ for (; j < j_end; j++)
 }
 ```
 
+## Threaded Implementation
+
+### Norm Calcuation
+
+
+
+### Matrix Multiplication
+
+The main function that is responsible for parallel matrix multiplication is `matrix_mult_threaded`. The function has 5 main steps:
+
+1. Setup thread and allocate memory
+
+```c
+const size_t N = lhs->size;
+const size_t PARTITION_SIZE = (size_t)ceil((double)N / (double)num_threads);
+pthread_t *threads;
+matrix_mult_worker_params_t *worker_params;
+
+threads = (pthread_t *)calloc(num_threads, sizeof(pthread_t));
+worker_params = (matrix_norm_worker_params_t *)calloc(num_threads, sizeof(matrix_norm_worker_params_t));
+```
+
+This code estimates the number of rows each thread will handle `PARTITION_SIZE` and allocates the arrays of work threads and their parameters.
+
+2. Work distribution
+
+```c
+worker_params[i].block_start_index = i * PARTITION_SIZE;
+worker_params[i].block_end_index = MIN((i + 1) * PARTITION_SIZE, N);
+```
+
+The matrix is divided among threads horizontally, for example:
+
+- Thread 0: rows 0 to `PARTITION_SIZE - 1`
+- Thread 1: rows `PARTITION_SIZE` to `2 * PARTITION_SIZE - 1`
+- Thread i-th: rows `i * PARTITION_SIZE` to `(i + 1) * PARTITION_SIZE - 1`
+
+3. Separate result buffers
+
+```c
+worker_params[i].result = (double *)calloc(N * N, sizeof(double));
+```
+
+Each thread has a complete individual NxN result matrix. This avoid race-condition without using locking mechanism, e.g., mutexes, which serverely drags the performance down due to overheads.
+
+4. Thread creation and execution
+
+```c
+pthread_create(&threads[i], NULL, matrix_mult_worker, (void *)&worker_params[i]);
+```
+
+5. Result aggregation
+
+```c
+for (size_t i = 0; i < num_threads; i++)
+{
+    pthread_join(threads[i], NULL);
+    for (size_t j = 0; j < N * N; j++)
+    {
+        result->data[j] += worker_params[i].result[j];
+    }
+    free(worker_params[i].result);
+}
+```
 
 # References
 
