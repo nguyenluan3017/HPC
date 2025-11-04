@@ -130,7 +130,7 @@ void show_help(const char *program_name)
     printf("  - Matrix size must be positive\n");
     printf("  - Min value must be ≤ max value\n");
     printf("  - Block size must evenly divide matrix size\n");
-    printf("  - Number of threads must be ≥ 1 and ≤ matrix size\n"); // Updated line
+    printf("  - Number of threads must be ≥ 1 and ≤ matrix size\n");
     printf("  - Number of repeats must be > 0\n");
     printf("  - Serial and threaded implementations require valid block size\n");
     printf("  - Threaded implementation requires valid number of threads\n");
@@ -388,15 +388,12 @@ void matrix_mult_naive(matrix_t *lhs, matrix_t *rhs, matrix_t *result)
 
     const size_t N = lhs->size;
 
-    // Zero out the result matrix
     memset(result->data, 0, N * N * sizeof(double));
 
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            // Remove this line since we've already zeroed the matrix
-            // result->data[i * N + j] = 0.0;
             for (int k = 0; k < N; k++)
             {
                 result->data[i * N + j] += lhs->data[i * N + k] * rhs->data[k * N + j];
@@ -415,7 +412,6 @@ void matrix_mult_serial(size_t block_size, matrix_t *lhs, matrix_t *rhs, matrix_
 
     const size_t N = lhs->size;
 
-    // Zero out the result matrix
     memset(result->data, 0, N * N * sizeof(double));
 
     for (size_t bi = 0; bi < N; bi += block_size)
@@ -467,7 +463,6 @@ void matrix_mult_cblas(matrix_t *lhs, matrix_t *rhs, matrix_t *result)
 
     const size_t N = lhs->size;
 
-    // Zero out the result matrix (though cblas_dgemm with beta=0.0 should handle this)
     memset(result->data, 0, N * N * sizeof(double));
 
     cblas_dgemm(
@@ -549,14 +544,12 @@ void matrix_mult_threaded(size_t num_threads, size_t block_size, matrix_t *lhs, 
         lhs->size, lhs->size,
         rhs->size, rhs->size);
 
-    // Zero out the result matrix before threading
     memset(result->data, 0, N * N * sizeof(double));
 
     threads = (pthread_t *)calloc(num_threads, sizeof(pthread_t));
     worker_params = (matrix_mult_worker_params_t *)calloc(num_threads, sizeof(matrix_mult_worker_params_t));
     mutex = (pthread_mutex_t *)calloc(1, sizeof(pthread_mutex_t));
 
-    // Initialize mutex
     pthread_mutex_init(mutex, NULL);
 
     for (size_t i = 0; i < num_threads; i++)
@@ -604,9 +597,8 @@ void *matrix_norm_worker(void *params)
     register double *row;
     register size_t j_end;
     register size_t j;
-    long double local_max_sum = 0.0;  // Local maximum for this thread
+    long double local_max_sum = 0.0;
 
-    // Compute local maximum (no synchronization needed)
     for (size_t i = start_index; i < end_index; i++)
     {
         row = &data[i * N];
@@ -622,7 +614,6 @@ void *matrix_norm_worker(void *params)
         local_max_sum = MAX(local_max_sum, row_sum);
     }
 
-    // Critical section: update shared result
     pthread_mutex_lock(worker_params->mutex);
     *(worker_params->shared_max_sum) = MAX(*(worker_params->shared_max_sum), local_max_sum);
     pthread_mutex_unlock(worker_params->mutex);
@@ -670,19 +661,18 @@ long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t
     pthread_t *threads;
     matrix_norm_worker_params_t *worker_params;
     pthread_mutex_t mutex;
-    long double shared_result = 0.0;  // Shared result among all threads
+    long double shared_result = 0.0;
 
     threads = (pthread_t *)calloc(num_threads, sizeof(pthread_t));
     worker_params = (matrix_norm_worker_params_t *)calloc(num_threads, sizeof(matrix_norm_worker_params_t));
 
-    // Initialize mutex
     pthread_mutex_init(&mutex, NULL);
 
     for (size_t i = 0; i < num_threads; i++)
     {
         worker_params[i].mat = mat;
-        worker_params[i].shared_max_sum = &shared_result;  // All threads share this
-        worker_params[i].mutex = &mutex;                   // All threads share this mutex
+        worker_params[i].shared_max_sum = &shared_result;
+        worker_params[i].mutex = &mutex;
         worker_params[i].start_index = i * PARTITION_SIZE;
         worker_params[i].end_index = MIN((i + 1) * PARTITION_SIZE, N);
         worker_params[i].block_size = block_size;
@@ -694,13 +684,11 @@ long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t
             (void *)&worker_params[i]);
     }
 
-    // Wait for all threads to complete
     for (size_t i = 0; i < num_threads; i++)
     {
         pthread_join(threads[i], NULL);
     }
 
-    // Clean up
     pthread_mutex_destroy(&mutex);
     free(threads);
     free(worker_params);
@@ -724,7 +712,6 @@ void write_result_in_yaml(FILE *file, size_t num_results, benchmark_result_t *re
     min_norm_runtime = results[0].norm_runtime;
     max_norm_runtime = results[0].norm_runtime;
 
-    /* Calculate statistics */
     for (i = 0; i < num_results; i++)
     {
         avg_benchmark_runtime += results[i].benchmark_runtime;
@@ -739,7 +726,6 @@ void write_result_in_yaml(FILE *file, size_t num_results, benchmark_result_t *re
     avg_benchmark_runtime /= num_results;
     avg_norm_runtime /= num_results;
 
-    /* Write YAML header */
     fprintf(file, "- benchmark_results:\n");
     fprintf(file, "  metadata:\n");
     fprintf(file, "    implementation: \"%s\"\n", results[0].impl);
@@ -749,7 +735,6 @@ void write_result_in_yaml(FILE *file, size_t num_results, benchmark_result_t *re
     fprintf(file, "    num_repeats: %zu\n", results[0].num_repeats);
     fprintf(file, "    timestamp: %ld\n", time(NULL));
 
-    /* Write statistics */
     fprintf(file, "  statistics:\n");
     fprintf(file, "    multiplication:\n");
     fprintf(file, "      average_time: %.9f\n", avg_benchmark_runtime);
@@ -764,7 +749,6 @@ void write_result_in_yaml(FILE *file, size_t num_results, benchmark_result_t *re
     fprintf(file, "      min_time: %.9f\n", min_benchmark_runtime + min_norm_runtime);
     fprintf(file, "      max_time: %.9f\n", max_benchmark_runtime + max_norm_runtime);
 
-    /* Write individual run results */
     fprintf(file, "  individual_runs:\n");
     for (i = 0; i < num_results; i++)
     {
