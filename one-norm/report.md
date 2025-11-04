@@ -308,22 +308,27 @@ The experimental results table is:
 | 3584        | 42.207631       | 7.070302          | 5.97    |
 | 4096        | 61.862645       | 9.640536          | 6.42    |
 
-## The Dependency of Matrix Size and Runtime
+### The Dependency of Matrix Size and Runtime
 
 ![](./img/runtime_vs_matrix_size.png)
 
-#### Key Observations:
-
-- As matrix size increases, the serial runtime grows much faster than the parallel one. 
-- 
-
-## The Speedup 
+### The Speedup 
 
 ![](./img/runtime_comparison_bars.png)
 
-#### Key Observations:
+### Key Observations:
 
-- 
+1. Decreasing speedup with matrix size
+
+- With small matrices (1024 - 2048), from 8.77x to 10.34x speedup
+- With large matrices (2560 - 4096), from 5.51x to 6.42x speedup
+- Peak performance is at 1536x1536 matrices with 10.34x speedup
+
+This is caused by memory pressure and overheads which come along with larger matrices. Performance reaches its peak at 1536x1536 and 2048x2048 matrices, when there is good balance between parallelization and cache fitness.
+
+2. Inspite of 16 CPU cores, the speedup reaches only ~10x (not 16x). As the matrix size grows larger, the speedup decreases significantly.
+
+All 16 cores competes for the same memory bus, causing memory bandwith bottlenecks.
 
 # References
 
