@@ -4,7 +4,28 @@
 
 ### Norm Calculation
 
+The 1-norm of a matrix is defined as:
 
+$$ \|A\|_1 = \max_{1 \le i \le n}{\sum_{j=1}^{n}{|a_{ij}|}} $$
+
+The function `matrix_norm_serial` process each row entirely and then update the result to the global maximum. Loop tiling is applied to optimize CPU cache.
+
+```c
+for (i = 0; i < N; i++)
+{
+    row = &data[i * N];
+    row_sum = 0.0;
+    for (bj = 0; bj < N; bj += block_size)
+    {
+        j_end = MIN(bj + block_size, N);
+        for (j = bj; j < j_end; j++)
+        {
+            row_sum += fabsl(row[j]);
+        }
+    }
+    max_row_sum = MAX(max_row_sum, row_sum);
+}
+```
 
 ### Matrix Multiplication
 
@@ -134,9 +155,51 @@ for (; j < j_end; j++)
 
 ## Threaded Implementation
 
-### Norm Calcuation
+### Norm Calculation
 
+`matrix_norm_threaded` function sets up and manages the parallel norm computation:
 
+1. Work distribution
+
+```c
+const size_t N = mat->size;
+const size_t PARTITION_SIZE = (size_t)ceil((double)N / (double)num_threads);
+```
+
+The matrix is horizontally divided by rows:
+
+- Each thread handles `PARTITION_SIZE` consective rows
+- The last thread may process fewer rows if N is not evenly divisible
+
+2. Thread parameter initiation
+
+```c
+for (size_t i = 0; i < num_threads; i++)
+{
+    worker_params[i].mat = mat;
+    worker_params[i].shared_max_sum = &shared_result;  // All threads share this
+    worker_params[i].mutex = &mutex;                   // All threads share this mutex
+    worker_params[i].start_index = i * PARTITION_SIZE;
+    worker_params[i].end_index = MIN((i + 1) * PARTITION_SIZE, N);
+    worker_params[i].block_size = block_size;
+
+    pthread_create(
+        &threads[i],
+        NULL,
+        matrix_norm_worker,
+        (void *)&worker_params[i]);
+}
+```
+
+3. Result aggregation
+
+One shared variable is used for storing the computation result. A critical section is created at the end of `matrix_norm_worker` for the shared result update.
+
+```c
+pthread_mutex_lock(worker_params->mutex);
+*(worker_params->shared_max_sum) = MAX(*(worker_params->shared_max_sum), local_max_sum);
+pthread_mutex_unlock(worker_params->mutex);
+```
 
 ### Matrix Multiplication
 
@@ -196,6 +259,10 @@ for (size_t i = 0; i < num_threads; i++)
     free(worker_params[i].result);
 }
 ```
+
+# Experiment Results
+
+
 
 # References
 

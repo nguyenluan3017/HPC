@@ -76,7 +76,8 @@ typedef struct matrix_mult_worker_params_t
 typedef struct matrix_norm_worker_params_t
 {
     matrix_t *mat;
-    long double max_sum;
+    long double *shared_max_sum;
+    pthread_mutex_t *mutex;
     size_t block_size;
     size_t start_index;
     size_t end_index;
@@ -603,8 +604,9 @@ void *matrix_norm_worker(void *params)
     register double *row;
     register size_t j_end;
     register size_t j;
-    long double max_row_sum = 0.0;
+    long double local_max_sum = 0.0;  // Local maximum for this thread
 
+    // Compute local maximum (no synchronization needed)
     for (size_t i = start_index; i < end_index; i++)
     {
         row = &data[i * N];
@@ -617,10 +619,13 @@ void *matrix_norm_worker(void *params)
                 row_sum += fabsl(row[j]);
             }
         }
-        max_row_sum = MAX(max_row_sum, row_sum);
+        local_max_sum = MAX(local_max_sum, row_sum);
     }
 
-    worker_params->max_sum = max_row_sum;
+    // Critical section: update shared result
+    pthread_mutex_lock(worker_params->mutex);
+    *(worker_params->shared_max_sum) = MAX(*(worker_params->shared_max_sum), local_max_sum);
+    pthread_mutex_unlock(worker_params->mutex);
 
     pthread_exit(NULL);
 }
@@ -664,20 +669,23 @@ long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t
     const size_t PARTITION_SIZE = (size_t)ceil((double)N / (double)num_threads);
     pthread_t *threads;
     matrix_norm_worker_params_t *worker_params;
-    long double *sums;
-    long double result;
+    pthread_mutex_t mutex;
+    long double shared_result = 0.0;  // Shared result among all threads
 
     threads = (pthread_t *)calloc(num_threads, sizeof(pthread_t));
     worker_params = (matrix_norm_worker_params_t *)calloc(num_threads, sizeof(matrix_norm_worker_params_t));
-    sums = (long double *)calloc(num_threads, sizeof(long double));
+
+    // Initialize mutex
+    pthread_mutex_init(&mutex, NULL);
 
     for (size_t i = 0; i < num_threads; i++)
     {
         worker_params[i].mat = mat;
+        worker_params[i].shared_max_sum = &shared_result;  // All threads share this
+        worker_params[i].mutex = &mutex;                   // All threads share this mutex
         worker_params[i].start_index = i * PARTITION_SIZE;
         worker_params[i].end_index = MIN((i + 1) * PARTITION_SIZE, N);
         worker_params[i].block_size = block_size;
-        worker_params[i].max_sum = 0;
 
         pthread_create(
             &threads[i],
@@ -686,18 +694,18 @@ long double matrix_norm_threaded(size_t num_threads, size_t block_size, matrix_t
             (void *)&worker_params[i]);
     }
 
-    result = 0;
+    // Wait for all threads to complete
     for (size_t i = 0; i < num_threads; i++)
     {
         pthread_join(threads[i], NULL);
-        result = MAX(result, worker_params[i].max_sum);
     }
 
+    // Clean up
+    pthread_mutex_destroy(&mutex);
     free(threads);
     free(worker_params);
-    free(sums);
 
-    return result;
+    return shared_result;
 }
 
 void write_result_in_yaml(FILE *file, size_t num_results, benchmark_result_t *results)
