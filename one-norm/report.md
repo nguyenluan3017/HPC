@@ -262,33 +262,68 @@ for (size_t i = 0; i < num_threads; i++)
 
 # Experiment Results
 
-## The Dependency of Matrix Size and Runtime
+The system configurations in which the tests are performed are:
 
-| Matrix Size | Serial Time (s) | Threaded Time (s) | Speedup |
+| Component | Specification |
+|-----------|---------------|
+| Operating System | Ubuntu Linux |
+| Kernel Version | 6.6.87.2 |
+| Architecture | x86_64 |
+| CPU Model | AMD Processor |
+| CPU Count | 16 cores |
+| L1d Cache | 32K |
+| L2 Cache | 4 MiB |
+| L3 Cache | 32 MiB |
+
+Based on the system information, we conducted the experiments with the matrix size of 512-multiples. The block size is 512 to fit the CPU caches and divides all matrix sizes. Second, the number of threads in the parallel test matches the CPU core number, that is, 16.
+
+Each test scenario is run fifty times and the runtime of each run is recorded for average estimation.
+
+| Test Type | Matrix Size | Block Size | Number of Threads | Number of Iterations | Implementation |
+|-----------|-------------|------------|-------------------|---------------------|----------------|
+| Serial    | 1024        | 512        | 1                 | 50                  | serial         |
+| Serial    | 1536        | 512        | 1                 | 50                  | serial         |
+| Serial    | 2048        | 512        | 1                 | 50                  | serial         |
+| Serial    | 2560        | 512        | 1                 | 50                  | serial         |
+| Serial    | 3072        | 512        | 1                 | 50                  | serial         |
+| Serial    | 3584        | 512        | 1                 | 50                  | serial         |
+| Serial    | 4096        | 512        | 1                 | 50                  | serial         |
+| Threaded  | 1024        | 512        | 16                | 50                  | threaded       |
+| Threaded  | 1536        | 512        | 16                | 50                  | threaded       |
+| Threaded  | 2048        | 512        | 16                | 50                  | threaded       |
+| Threaded  | 2560        | 512        | 16                | 50                  | threaded       |
+| Threaded  | 3072        | 512        | 16                | 50                  | threaded       |
+| Threaded  | 3584        | 512        | 16                | 50                  | threaded       |
+| Threaded  | 4096        | 512        | 16                | 50                  | threaded       |
+
+The experimental results table is:
+
+| Matrix Size | Serial Time (s) | Threaded Time (s) | $\frac{\text{Threaded Time}}{\text{Serial Time}}$ |
 |-------------|-----------------|-------------------|---------|
-| 1024        | 1.809551        | 0.206279          | 8.77   x |
-| 1536        | 6.319773        | 0.611323          | 10.34  x |
-| 2048        | 15.141643       | 1.514556          | 10.00  x |
-| 2560        | 16.170770       | 2.935385          | 5.51   x |
-| 3072        | 25.652109       | 4.590539          | 5.59   x |
-| 3584        | 42.207631       | 7.070302          | 5.97   x |
-| 4096        | 61.862645       | 9.640536          | 6.42   x |
+| 1024        | 1.809551        | 0.206279          | 8.77    |
+| 1536        | 6.319773        | 0.611323          | 10.34   |
+| 2048        | 15.141643       | 1.514556          | 10.00   |
+| 2560        | 16.170770       | 2.935385          | 5.51    |
+| 3072        | 25.652109       | 4.590539          | 5.59    |
+| 3584        | 42.207631       | 7.070302          | 5.97    |
+| 4096        | 61.862645       | 9.640536          | 6.42    |
+
+## The Dependency of Matrix Size and Runtime
 
 ![](./img/runtime_vs_matrix_size.png)
 
+#### Key Observations:
+
+- As matrix size increases, the serial runtime grows much faster than the parallel one. 
+- 
+
 ## The Speedup 
 
-Matrix Size | Serial (s)  |    Threaded (s)  |  Speedup     
-------------|-------------|------------------|-----------------
-1024        | 1.810       |    0.206         |  8.77x
-1536        | 6.320       |    0.611         |  10.34x
-2048        | 15.142      |    1.515         |  10.00x
-2560        | 16.171      |    2.935         |  5.51x
-3072        | 25.652      |    4.591         |  5.59x
-3584        | 42.208      |    7.070         |  5.97x
-4096        | 61.863      |    9.641         |  6.42x
-
 ![](./img/runtime_comparison_bars.png)
+
+#### Key Observations:
+
+- 
 
 # References
 
