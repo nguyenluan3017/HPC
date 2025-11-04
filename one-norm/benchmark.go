@@ -372,6 +372,51 @@ func plotRuntimeDependenceOnMatrixSize(serialResults BenchmarkResults, threadedR
 	if err := p.Save(12*vg.Inch, 8*vg.Inch, imagePath); err != nil {
 		log.Fatal(err)
 	}
+
+	// Print markdown table with results
+	fmt.Println("\n## Runtime vs Matrix Size Results")
+	fmt.Println("| Matrix Size | Serial Time (s) | Threaded Time (s) | Speedup |")
+	fmt.Println("|-------------|-----------------|-------------------|---------|")
+
+	// Create maps for easy lookup
+	serialTimes := make(map[uint]float64)
+	threadedTimes := make(map[uint]float64)
+
+	for _, result := range serialResults {
+		serialTimes[result.Metadata.MatrixSize] = result.Stats.Total.AvgTime
+	}
+
+	for _, result := range threadedResults {
+		threadedTimes[result.Metadata.MatrixSize] = result.Stats.Total.AvgTime
+	}
+
+	// Get all matrix sizes and sort them
+	matrixSizes := make([]uint, 0)
+	for size := range serialTimes {
+		if _, exists := threadedTimes[size]; exists {
+			matrixSizes = append(matrixSizes, size)
+		}
+	}
+
+	// Sort matrix sizes
+	for i := 0; i < len(matrixSizes)-1; i++ {
+		for j := 0; j < len(matrixSizes)-i-1; j++ {
+			if matrixSizes[j] > matrixSizes[j+1] {
+				matrixSizes[j], matrixSizes[j+1] = matrixSizes[j+1], matrixSizes[j]
+			}
+		}
+	}
+
+	// Print table rows
+	for _, size := range matrixSizes {
+		serialTime := serialTimes[size]
+		threadedTime := threadedTimes[size]
+		speedup := serialTime / threadedTime
+
+		fmt.Printf("| %-11d | %-15.6f | %-17.6f | %-7.2fx |\n",
+			size, serialTime, threadedTime, speedup)
+	}
+	fmt.Println()
 }
 
 func plotSerialAndThreadedSpeedup(serialResults BenchmarkResults, threadedResults BenchmarkResults, imageDirPath string) {
@@ -464,15 +509,15 @@ func plotSerialAndThreadedSpeedup(serialResults BenchmarkResults, threadedResult
 
 	// Print comparison information
 	fmt.Println("\nRuntime Comparison Analysis:")
-	fmt.Printf("%-12s %-15s %-15s %-12s\n", "Matrix Size", "Serial (s)", "Threaded (s)", "Speedup")
-	fmt.Println(strings.Repeat("-", 60))
+	fmt.Printf("%-12s | %-15s | %-15s | %-12s\n", "Matrix Size", "Serial (s)", "Threaded (s)", "Speedup")
+	fmt.Printf("%-12s | %-15s | %-15s | %-12s\n", "---", "---", "---", "---")
 
 	for _, size := range matrixSizes {
 		serialTime := serialTimes[size]
 		threadedTime := threadedTimes[size]
 		speedup := serialTime / threadedTime
 
-		fmt.Printf("%-12d %-15.3f %-15.3f %-12.2fx\n",
+		fmt.Printf("%-12d | %-15.3f | %-15.3f | %-12.2fx\n",
 			size, serialTime, threadedTime, speedup)
 	}
 }
